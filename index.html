@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.15" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.16" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -456,7 +456,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 @media(max-width:520px){.company-sales-row{grid-template-columns:minmax(0,1fr) auto;}.company-sales-row .company-sales-total-cell{grid-column:1/-1;display:none;}}
 
 
-/* V5.15 — keep the complete dashboard inside one continuous safe-margin frame */
+/* V5.16 — keep the complete dashboard inside one continuous safe-margin frame */
 .section.dashboard-v5{
   margin:10px 10px 18px;
   padding:14px 12px 24px !important;
@@ -849,6 +849,15 @@ async function clearWizardStatePersistence() {
 function setState(patch) { Object.assign(state, patch); render(); }
 function setModal(m) { state.modal = m; render(); }
 function closeModal() { state.modal = null; render(); }
+
+// Explicitly closing the Smart Visit wizard means the user cancelled this draft.
+// Clear in-memory state first, then serialize deletion after any queued autosaves.
+async function cancelSmartWizard() {
+  if (state.wizard) state.wizard = null;
+  state.modal = null;
+  render();
+  await clearWizardStatePersistence();
+}
 function showToast(msg) {
   state.toast = msg;
   render();
@@ -2080,7 +2089,10 @@ app.addEventListener("keydown", (e) => {
 
 function handleAction(action, id, el) {
   if (action === "set-tab") { state.tab = id; state.customerDetailId = null; render(); return; }
-  if (action === "close-modal") { closeModal(); return; }
+  if (action === "close-modal") {
+    if (state.modal && state.modal.type === "smart-wizard") { cancelSmartWizard(); return; }
+    closeModal(); return;
+  }
   if (action === "close-confirm") { state.confirm = null; render(); return; }
   if (action === "confirm-yes") { const fn = state.confirm && state.confirm.onConfirm; state.confirm = null; if (fn) fn(); return; }
   if (action === "reset-all") { resetAllConfirm(); return; }
@@ -2264,7 +2276,7 @@ function render() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.15</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.16</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
