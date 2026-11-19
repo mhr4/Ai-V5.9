@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.16" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.17" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -456,7 +456,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 @media(max-width:520px){.company-sales-row{grid-template-columns:minmax(0,1fr) auto;}.company-sales-row .company-sales-total-cell{grid-column:1/-1;display:none;}}
 
 
-/* V5.16 — keep the complete dashboard inside one continuous safe-margin frame */
+/* V5.17 — keep the complete dashboard inside one continuous safe-margin frame */
 .section.dashboard-v5{
   margin:10px 10px 18px;
   padding:14px 12px 24px !important;
@@ -655,6 +655,11 @@ function getCustomerStatus(c) {
   if (!c.lastVisitDate) return { key: "never", ratio: 999, days: null };
   const days = daysBetween(c.lastVisitDate, todayISO());
   const ratio = days / freq;
+  if (c.nextVisitDate) {
+    const untilFollowUp = daysBetween(todayISO(), c.nextVisitDate);
+    if (untilFollowUp <= 0) return { key: untilFollowUp < 0 ? "critical" : "due", ratio: Math.max(ratio, 1), days, followUpDue: true };
+    if (untilFollowUp <= 3) return { key: "soon", ratio: Math.max(ratio, 0.7), days, followUpDue: true };
+  }
   if (ratio >= 1.5) return { key: "critical", ratio, days };
   if (ratio >= 1) return { key: "due", ratio, days };
   if (ratio >= 0.7) return { key: "soon", ratio, days };
@@ -980,8 +985,8 @@ async function saveVendorProfile() { await DB.set("vendorProfile", state.vendorP
 function exportAllData() {
   const payload = {
     app: "Sales AI",
-    version: "v5.10",
-    compatibleWith: ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10"],
+    version: "v5.17",
+    compatibleWith: ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10", "v5.17"],
     exportedAt: new Date().toISOString(),
     customers: state.customers,
     products: state.products,
@@ -1730,9 +1735,17 @@ function emptyVisitForm(customerId, coords) {
   };
 }
 function openStartVisit(customerId, coords, companyId) {
+  const customer = state.customers.find(c => c.id === customerId) || {};
   const form = emptyVisitForm(customerId, coords);
   form.companyId = String(companyId || "");
-  setModal({ type: "visit", form });
+  form.purchasingManagerName = customer.purchasingManagerName || "";
+  form.purchasingManagerPhone = customer.purchasingManagerPhone || "";
+  form.noPurchaseReason = "";
+  form.followUpChoice = "";
+  form.buyerAvailability = "";
+  form.visitOutcome = "";
+  form.visitNote = "";
+  setModal({ type: "visit-intake", form });
 }
 function openEditVisit(visitId) {
   const v = state.visits.find((x) => x.id === visitId);
@@ -1845,6 +1858,18 @@ function returnInvoiceItemToSearch(rid) {
 }
 function updateVisitItem(rid, key, value) {
   updateVisitItemSilent(rid, key, value);
+  if (key === "unitPrice" && state.modal && state.modal.form) {
+    const row = state.modal.form.items.find(it => it.rid === rid);
+    const product = row && row.productId ? state.products.find(p => p.id === row.productId) : null;
+    const nextPrice = Math.max(0, Number(value) || 0);
+    if (product && Number(product.unitPrice) !== nextPrice) {
+      product.unitPrice = nextPrice;
+      product.updatedAt = new Date().toISOString();
+      saveProducts().catch(err => console.error("Could not persist updated catalog price", err));
+      rebuildGlobalProducts();
+      saveGlobalProducts().catch(err => console.error("Could not persist global catalog", err));
+    }
+  }
   render();
 }
 function toggleQuestionsExpanded() {
@@ -1900,7 +1925,11 @@ async function submitVisit() {
   }
   if (productsChanged) { rebuildGlobalProducts(); await saveProducts(); await saveGlobalProducts(); }
 
-  const answers = editingId ? (state.visits.find(v => v.id === editingId)?.answers || []) : [];
+  const answers = editingId ? (state.visits.find(v => v.id === editingId)?.answers || []) :
+    (f.answers ? Object.entries(f.answers).filter(([,value]) => value !== "" && value != null).map(([key,value]) => ({
+      question: ({q_reason:"دلیل عدم خرید / وضعیت نیاز",q_visit_outcome:"نتیجه ویزیت",q_buyer_availability:"وضعیت حضور مسئول خرید",q_purchasing_manager:"نام مسئول خرید",q_purchasing_phone:"شماره مسئول خرید",q_visit_note:"یادداشت ویزیت"})[key] || key,
+      answer: String(value)
+    })) : []);
 
   if (editingId) {
     state.visits = state.visits.map((v) => {
@@ -1934,6 +1963,8 @@ async function submitVisit() {
     lat: f.lat || "", lng: f.lng || "",
     items, paymentMethod: f.paymentMethod, companyId: f.companyId || "",
     answers, freeNote: f.freeNote || "",
+    purchasingManagerName: f.purchasingManagerName || "",
+    purchasingManagerPhone: f.purchasingManagerPhone || "",
     invoiceNumber: items.length ? nextInvoiceNumber() : null,
     paymentTracking: items.length > 0,
     paymentTermsDays: terms,
@@ -1942,7 +1973,12 @@ async function submitVisit() {
       (items.length && f.paymentMethod === "چک" ? [{id:uid(), date:todayISO(), amount:items.reduce((sum,it)=>sum+(Number(it.qty)||0)*(Number(it.unitPrice)||0),0), method:"چک", status:"pending", reference:"", note:"چک ثبت‌شده؛ در انتظار وصول"}] : []),
   };
   state.visits = state.visits.concat([entry]);
-  state.customers = state.customers.map((c) => (c.id === f.customerId ? Object.assign({}, c, { lastVisitDate: entry.date }) : c));
+  state.customers = state.customers.map((c) => (c.id === f.customerId ? Object.assign({}, c, {
+    lastVisitDate: entry.date,
+    purchasingManagerName: f.purchasingManagerName || c.purchasingManagerName || "",
+    purchasingManagerPhone: f.purchasingManagerPhone || c.purchasingManagerPhone || "",
+    nextVisitDate: ""
+  }) : c));
   await saveProducts();
   await saveVisits();
   await saveCustomers();
@@ -2078,6 +2114,7 @@ app.addEventListener("change", (e) => {
     } else if (state.modal && state.modal.form) {
       state.modal.form[t.dataset.field] = t.type === "checkbox" ? t.checked : t.value;
       if (state.modal.type === "payment-record" && t.dataset.field === "method") render();
+      if (state.modal.type === "visit-intake") render();
     }
   }
 });
@@ -2126,7 +2163,12 @@ function handleAction(action, id, el) {
     const sel = document.getElementById("quick-invoice-customer");
     const companySel = document.getElementById("quick-invoice-company");
     if (sel && sel.value) {
-      openStartVisit(sel.value, state.gps.coords, companySel ? companySel.value : ((state.modal && state.modal.form && state.modal.form.companyId) || ""));
+      const form = emptyVisitForm(sel.value, state.gps.coords);
+      form.companyId = companySel ? companySel.value : ((state.modal && state.modal.form && state.modal.form.companyId) || "");
+      const customer = state.customers.find(c => c.id === sel.value) || {};
+      form.purchasingManagerName = customer.purchasingManagerName || "";
+      form.purchasingManagerPhone = customer.purchasingManagerPhone || "";
+      setModal({ type: "visit", form });
     } else {
       showToast("ابتدا مشتری را انتخاب کنید");
     }
@@ -2156,6 +2198,26 @@ function handleAction(action, id, el) {
     openStartVisit(id, state.gps.coords);
     return;
   }
+  if (action === "visit-create-invoice") {
+    const current = state.modal && state.modal.type === "visit-intake" ? state.modal.form : null;
+    if (!current) return;
+    const form = emptyVisitForm(current.customerId, {lat:current.lat,lng:current.lng});
+    form.companyId = current.companyId || "";
+    form.purchasingManagerName = current.purchasingManagerName || "";
+    form.purchasingManagerPhone = current.purchasingManagerPhone || "";
+    form.answers = {
+      q_reason: current.noPurchaseReason || "",
+      q_visit_outcome: "خرید انجام شد",
+      q_buyer_availability: current.buyerAvailability || "",
+      q_purchasing_manager: current.purchasingManagerName || "",
+      q_purchasing_phone: current.purchasingManagerPhone || "",
+      q_visit_note: current.visitNote || ""
+    };
+    form.freeNote = current.visitNote || "";
+    setModal({type:"visit",form,visitIntakeData:Object.assign({},current)});
+    return;
+  }
+  if (action === "visit-save-no-purchase") { saveNoPurchaseVisit(); return; }
   if (action === "edit-invoice") { openEditVisit(id); return; }
   if (action === "toggle-questions") { toggleQuestionsExpanded(); return; }
   if (action === "whatsapp-invoice") {
@@ -2276,7 +2338,7 @@ function render() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.16</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.17</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
@@ -2502,13 +2564,14 @@ function renderCustomerDetail(id) {
   const status = getCustomerStatus(c);
   const meta = STATUS_META[status.key];
   const invoices = state.visits.filter((v) => v.customerId === id && v.items && v.items.length).sort((a, b) => (a.date < b.date ? 1 : -1));
+  const nonInvoiceVisits = state.visits.filter(v => v.customerId === id && (!v.items || !v.items.length)).sort((a,b) => (a.date < b.date ? 1 : -1));
   const totalAll = invoices.reduce((a, v) => a + getVisitTotal(v), 0);
 
   return (
     '<div class="section" style="padding-bottom:24px;">' +
       '<button class="flex items-center gap-1" style="color:var(--ink-soft);font-size:12px;font-weight:800;align-self:flex-start;" data-action="back-to-customers">' + icon("arrowright", 15) + "بازگشت به مشتریان</button>" +
 
-      '<button class="btn btn-primary btn-block" style="padding:16px;font-size:15px;" data-action="start-visit-from-card" data-id="' + c.id + '">' + icon("receipt", 18) + "ثبت فاکتور برای " + esc(c.name) + "</button>" +
+      '<button class="btn btn-primary btn-block" style="padding:16px;font-size:15px;" data-action="start-visit-from-card" data-id="' + c.id + '">' + icon("receipt", 18) + "شروع ویزیت برای " + esc(c.name) + "</button>" +
 
       '<div class="card">' +
         '<div class="flex items-start justify-between gap-2">' +
@@ -2519,6 +2582,9 @@ function renderCustomerDetail(id) {
         '<div class="flex-col gap-1 small muted" style="margin-top:10px;">' +
           (c.address ? '<div class="flex items-center gap-2">' + icon("map", 12) + esc(c.address) + "</div>" : "") +
           (c.phone ? '<div class="flex items-center gap-2">' + icon("phone", 12) + esc(c.phone) + "</div>" : "") +
+          (c.purchasingManagerName ? '<div class="flex items-center gap-2">' + icon("user", 12) + "مسئول خرید: " + esc(c.purchasingManagerName) + "</div>" : "") +
+          (c.purchasingManagerPhone ? '<div class="flex items-center gap-2">' + icon("phone", 12) + "تلفن مسئول خرید: " + esc(c.purchasingManagerPhone) + "</div>" : "") +
+          (c.nextVisitDate ? '<div class="flex items-center gap-2" style="color:var(--amber-dark);font-weight:800;">' + icon("calendar", 12) + "پیگیری بعدی: " + formatFaDate(c.nextVisitDate) + "</div>" : "") +
           '<div class="flex items-center gap-2">' + icon("clock", 12) + "آخرین ویزیت: " + formatFaDate(c.lastVisitDate) + " · بازه: هر " + formatFaNum(c.visitFrequency) + " روز</div>" +
           '<div class="flex items-center gap-2">اولویت: ' + esc(c.priority) + "</div>" +
           (c.lat && c.lng ? '<a href="https://www.google.com/maps?q=' + c.lat + "," + c.lng + '" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2" style="color:var(--amber-dark);font-weight:700;">' + icon("nav", 12) + "نمایش موقعیت روی نقشه</a>" : "") +
@@ -2530,6 +2596,20 @@ function renderCustomerDetail(id) {
         "</div>" +
       "</div>" +
 
+      (nonInvoiceVisits.length ? '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">سوابق ویزیت بدون خرید</div>' +
+        '<div class="flex-col gap-2">' + nonInvoiceVisits.slice(0,8).map(v =>
+          '<div class="v1-list-card" style="padding:10px 12px;">' +
+            '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">' +
+              '<strong style="font-size:12px;">'+formatFaDate(v.date)+'</strong>' +
+              '<span class="badge">'+(v.visitOutcome==="decision_pending"?"تصمیم به بعد موکول شد":"خرید انجام نشد")+'</span>' +
+            '</div>' +
+            (v.noPurchaseReason ? '<div class="small muted" style="margin-top:5px;">دلیل: '+esc(v.noPurchaseReason)+'</div>' : '') +
+            (v.followUpDate ? '<div class="small" style="margin-top:4px;color:var(--amber-dark);font-weight:800;">پیگیری: '+formatFaDate(v.followUpDate)+'</div>' : '') +
+            (v.purchasingManagerName || v.purchasingManagerPhone ? '<div class="small muted" style="margin-top:4px;">مسئول خرید: '+esc(v.purchasingManagerName||"—")+' · '+esc(v.purchasingManagerPhone||"—")+'</div>' : '') +
+            (v.freeNote ? '<div class="small muted" style="margin-top:4px;">'+esc(v.freeNote)+'</div>' : '') +
+          '</div>'
+        ).join('') + '</div></div>' : '') +
       '<div>' +
         '<div class="flex items-center justify-between" style="margin-bottom:8px;">' +
           '<span style="font-size:13px;font-weight:800;">فاکتورهای این مشتری</span>' +
@@ -2631,6 +2711,7 @@ function renderModal() {
   const m = state.modal;
   if (m.type === "customer") return renderCustomerModal(m);
   if (m.type === "product") return renderProductModal(m);
+  if (m.type === "visit-intake") return renderVisitIntakeModal(m);
   if (m.type === "visit") return renderVisitModal(m);
   if (m.type === "invoiceView") return renderInvoiceModal(m);
   if (m.type === "quick-invoice") return renderQuickInvoiceModal();
@@ -2895,6 +2976,82 @@ function renderProductModal(m) {
       '</div>' +
     "</div></div>"
   );
+}
+
+function renderVisitIntakeModal(m) {
+  const f = m.form || {};
+  const cust = state.customers.find(c => c.id === f.customerId);
+  const choice = (name, value, label) => '<label class="chip '+(f[name]===value?'active':'')+'" style="display:inline-flex;align-items:center;gap:5px;margin:3px 4px 3px 0;cursor:pointer;"><input type="radio" name="'+name+'" value="'+value+'" data-field="'+name+'" '+(f[name]===value?'checked':'')+' style="accent-color:var(--amber-dark);margin:0;" />'+label+'</label>';
+  return '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">'+
+    '<div class="modal-head" style="padding:14px 18px 10px;margin:0;border-bottom:1px solid var(--v1-line);">'+
+      '<div><div class="v1-page-title" style="font-size:17px;">ثبت ویزیت</div><div class="v1-page-sub">نتیجه ملاقات را ثبت کن؛ در صورت خرید، بعداً فاکتور صادر می‌شود</div></div>'+
+      '<button data-action="close-modal">'+icon("x",20)+'</button>'+
+    '</div><div style="padding:14px 18px 22px;">'+
+      '<div class="v1-list-card" style="padding:11px 12px;margin-bottom:12px;">'+
+        '<div class="v1-section-label">مشتری</div><div style="font-weight:900;font-size:14px;margin-top:5px;">'+esc(cust?cust.name:"—")+'</div>'+
+        (cust&&cust.phone?'<div class="small muted" style="margin-top:3px;">تلفن فروشگاه: '+esc(cust.phone)+'</div>':'')+
+      '</div>'+
+      '<div class="v1-section-label" style="margin-bottom:7px;">مسئول خرید</div>'+
+      '<div class="grid-2">'+
+        field("نام مسئول خرید",'<input class="input" data-field="purchasingManagerName" value="'+esc(f.purchasingManagerName||"")+'" placeholder="نام و نام خانوادگی" />')+
+        field("شماره تماس مسئول خرید",'<input class="input" type="tel" data-field="purchasingManagerPhone" value="'+esc(f.purchasingManagerPhone||"")+'" placeholder="شماره موبایل" />')+
+      '</div>'+
+      '<div class="field" style="margin-top:9px;"><span class="field-label">وضعیت حضور مسئول خرید</span><div style="display:flex;flex-wrap:wrap;">'+
+        choice("buyerAvailability","present","حاضر بود")+choice("buyerAvailability","afternoon","عصرها می‌آید")+choice("buyerAvailability","specific_days","روزهای مشخص")+choice("buyerAvailability","call_first","قبلش تماس بگیر")+choice("buyerAvailability","unknown","اطلاع ندارم")+
+      '</div></div>'+
+      '<div class="field" style="margin-top:10px;"><span class="field-label">نتیجه ویزیت</span><div style="display:flex;flex-wrap:wrap;">'+
+        choice("visitOutcome","purchased","خرید انجام شد")+choice("visitOutcome","not_purchased","خرید انجام نشد")+choice("visitOutcome","decision_pending","تصمیم‌گیری به بعد موکول شد")+
+      '</div></div>'+
+      (f.visitOutcome==="not_purchased"||f.visitOutcome==="decision_pending" ?
+        '<div class="field" style="margin-top:10px;"><span class="field-label">دلیل اصلی عدم خرید / تعویق</span><div style="display:flex;flex-wrap:wrap;">'+
+          choice("noPurchaseReason","stock","موجودی کافی داشت")+choice("noPurchaseReason","competitor_price","قیمت رقیب پایین‌تر بود")+choice("noPurchaseReason","cashflow","مشکل نقدینگی داشت")+choice("noPurchaseReason","buyer_absent","مسئول خرید حضور نداشت")+choice("noPurchaseReason","not_needed","فعلاً نیاز نداشت")+choice("noPurchaseReason","other","سایر / نامشخص")+
+        '</div></div>'+
+        '<div class="field" style="margin-top:10px;"><span class="field-label">زمان مراجعه بعدی</span><div style="display:flex;flex-wrap:wrap;">'+
+          choice("followUpChoice","tomorrow","فردا")+choice("followUpChoice","2_3_days","۲ تا ۳ روز دیگر")+choice("followUpChoice","next_week","هفته آینده")+choice("followUpChoice","2_weeks","دو هفته دیگر")+choice("followUpChoice","call","پس از تماس تلفنی")+choice("followUpChoice","unknown","زمان مشخص نیست")+
+        '</div></div>' : '')+
+      '<div style="margin-top:10px;">'+field("یادداشت و نکات مهم ملاقات",'<textarea class="textarea" rows="2" data-field="visitNote" placeholder="نیاز مشتری، وضعیت رقبا یا نکته مهم...">'+esc(f.visitNote||"")+'</textarea>')+'</div>'+
+      '<div class="v1-action-bar" style="margin-top:14px;display:flex;flex-wrap:wrap;">'+
+        '<button class="btn btn-outline" data-action="close-modal">انصراف</button>'+
+        (f.visitOutcome==="purchased" ? '<button class="btn btn-primary" data-action="visit-create-invoice">ادامه و صدور فاکتور</button>' : '<button class="btn btn-primary" data-action="visit-save-no-purchase">ثبت نتیجه ویزیت</button>')+
+      '</div>'+
+    '</div></div></div>';
+}
+
+async function saveNoPurchaseVisit() {
+  const m = state.modal;
+  if (!m || m.type !== "visit-intake") return;
+  const f = m.form || {};
+  if (!f.customerId) return;
+  if (!f.visitOutcome) { showToast("ابتدا نتیجه ویزیت را انتخاب کن"); return; }
+  if (f.visitOutcome === "purchased") { showToast("برای ثبت خرید، گزینه ادامه و صدور فاکتور را انتخاب کن"); return; }
+  const questionAnswers = [
+    ["نتیجه ویزیت", f.visitOutcome === "not_purchased" ? "خرید انجام نشد" : "تصمیم‌گیری به بعد موکول شد"],
+    ["دلیل عدم خرید", f.noPurchaseReason || "ثبت نشده"],
+    ["وضعیت حضور مسئول خرید", f.buyerAvailability || "ثبت نشده"],
+    ["زمان مراجعه بعدی", f.followUpChoice || "ثبت نشده"],
+    ["نام مسئول خرید", f.purchasingManagerName || "ثبت نشده"],
+    ["شماره مسئول خرید", f.purchasingManagerPhone || "ثبت نشده"]
+  ].map(([question,answer]) => ({question,answer}));
+  const days = ({tomorrow:1,"2_3_days":3,next_week:7,"2_weeks":14})[f.followUpChoice] || null;
+  const entry = {
+    id:uid(), date:todayISO(), customerId:f.customerId, lat:f.lat||"", lng:f.lng||"",
+    items:[], paymentMethod:"", companyId:f.companyId||"", answers:questionAnswers,
+    freeNote:f.visitNote||"", visitOutcome:f.visitOutcome, noPurchaseReason:f.noPurchaseReason||"",
+    buyerAvailability:f.buyerAvailability||"", purchasingManagerName:f.purchasingManagerName||"",
+    purchasingManagerPhone:f.purchasingManagerPhone||"", followUpChoice:f.followUpChoice||"",
+    followUpDate:days ? addDaysISO(todayISO(),days) : "", invoiceNumber:null, paymentTracking:false, payments:[]
+  };
+  state.visits = state.visits.concat([entry]);
+  state.customers = state.customers.map(c => c.id===f.customerId ? Object.assign({},c,{
+    lastVisitDate:entry.date,
+    purchasingManagerName:f.purchasingManagerName||c.purchasingManagerName||"",
+    purchasingManagerPhone:f.purchasingManagerPhone||c.purchasingManagerPhone||"",
+    nextVisitDate:entry.followUpDate||""
+  }) : c);
+  await saveVisits();
+  await saveCustomers();
+  closeModal();
+  showToast("نتیجه ویزیت و اطلاعات پیگیری ذخیره شد");
 }
 
 function renderVisitModal(m) {
