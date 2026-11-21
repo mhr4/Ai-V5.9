@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.17" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.18.2" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -434,7 +434,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 .payment-list-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .payment-list-actions .btn{font-size:10px;padding:7px 9px;}
 .payment-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
-.payment-summary-box{padding:10px;border-radius:11px;background:var(--v1-soft);border:1px solid var(--v1-line);}
+.payment-summary-box{padding:10px;border-radius:11px;background:var(--v1-primary-soft);border:1px solid var(--v1-line);}
 .payment-summary-box strong{display:block;font-size:13px;margin-top:4px;}
 .payment-history-item{border-bottom:1px solid var(--v1-line);padding:8px 0;font-size:11px;}
 .payment-history-item:last-child{border-bottom:0;}
@@ -442,7 +442,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 .invoice-company-filter-note{font-size:10px;color:var(--v1-primary);margin-top:4px;}
 .invoice-company-filter-note.empty{color:var(--v1-muted);}
 .company-sales-modal{max-width:620px;}
-.company-sales-switch{display:flex;gap:6px;background:var(--v1-soft);padding:4px;border-radius:12px;margin-bottom:12px;}
+.company-sales-switch{display:flex;gap:6px;background:var(--v1-primary-soft);padding:4px;border-radius:12px;margin-bottom:12px;}
 .company-sales-switch button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 6px;font-size:11px;font-weight:800;color:var(--v1-muted);cursor:pointer;}
 .company-sales-switch button.active{background:#fff;color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.07);}
 .company-sales-list{display:flex;flex-direction:column;gap:7px;}
@@ -456,7 +456,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 @media(max-width:520px){.company-sales-row{grid-template-columns:minmax(0,1fr) auto;}.company-sales-row .company-sales-total-cell{grid-column:1/-1;display:none;}}
 
 
-/* V5.17 — keep the complete dashboard inside one continuous safe-margin frame */
+/* V5.18.2 — keep the complete dashboard inside one continuous safe-margin frame */
 .section.dashboard-v5{
   margin:10px 10px 18px;
   padding:14px 12px 24px !important;
@@ -465,6 +465,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
   box-sizing:border-box;
 }
 
+.strike{text-decoration:line-through;text-decoration-thickness:1.5px;}
 </style>
 </head>
 <body>
@@ -539,7 +540,7 @@ const DB = {
     try { localStorage.removeItem(key); } catch (e) { console.warn("localStorage delete", e); }
   },
   async migrateFromLocalStorage() {
-    const keys = ["customers", "products", "visits", "aiAnalysis", "vendorProfile", "companies"];
+    const keys = ["customers", "products", "visits", "aiAnalysis", "vendorProfile", "companies", "globalProducts", "wizardState"];
     let migrated = 0;
     for (const key of keys) {
       try {
@@ -585,6 +586,15 @@ const VISIT_QUESTIONS = [
   { id: "q_competitor", type: "choice", text: "قیمت ما نسبت به رقبا؟", options: ["پایین‌تر", "مشابه", "بالاتر", "نمی‌دانم"] },
   { id: "q_bestseller", type: "text", text: "پرفروش‌ترین کالا در این مغازه چیست؟" },
 ];
+const VISIT_EXTRA_QUESTIONS = [
+  { id: "q_next_visit", type: "text", text: "ویزیت بعدی کِی باشد؟" },
+  { id: "q_buyer_time", type: "text", text: "مسئول خرید کِی در مغازه هست؟" },
+  { id: "q_buyer_phone", type: "text", text: "شماره مسئول خرید" },
+];
+const VISIT_ALL_QUESTIONS = VISIT_QUESTIONS.concat(VISIT_EXTRA_QUESTIONS);
+const VISIT_QUESTION_TEXT = VISIT_ALL_QUESTIONS.reduce((m, q) => { m[q.id] = q.text; return m; }, {});
+const BUYER_TIMING_OPTIONS = ["امروز", "فردا", "این هفته", "هفته بعد", "اول ماه", "نمی‌دانم"];
+const RETURN_IN_OPTIONS = ["۳ روز", "۷ روز", "۱۴ روز", "۳۰ روز", "نمی‌دانم"];
 const GPS_MATCH_RADIUS_M = 500;
 
 /* ================================================================== */
@@ -619,9 +629,13 @@ const ICONS = {
   arrowleft: '<path d="M19 12H5M11 18l-6-6 6-6"/>',
   whatsapp: '<path d="M3 21l1.4-4.6A9 9 0 1 1 8 20.4Z"/><path d="M8.5 8.7c.2-.5.5-.5.8-.5h.6c.2 0 .5 0 .7.5s.8 1.9.8 2.1.1.3 0 .5-.2.3-.4.5-.4.5-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.2.5.1.6-.1s.6-.7.8-1 .4-.2.6-.1l1.8.9c.2.1.4.2.4.4s0 1-.4 1.9-2 1.6-2.8 1.6-2.2-.3-4.7-2.5c-2.9-2.6-3.4-4.6-3.5-4.9s-.6-1.3-.6-2.5.6-1.8.8-2.1Z"/>',
   tag: '<path d="M12 2 2 12l9 9 10-10V2Z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/>',
+  upload: '<path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M4 5h16"/>',
+  route: '<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8H9a3 3 0 0 1 0-6h7"/>',
 };
 ICONS["trendup"] = '<path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/>';
 ICONS["trenddown"] = '<path d="m23 18-9.5-9.5-5 5L1 6"/><path d="M17 18h6v-6"/>';
+ICONS["note"] = '<path d="M4 4h16v12l-4 4H4Z"/><path d="M15 20v-4h4"/><path d="M8 8h8M8 12h5"/>';
 ICONS["calcheck"] = '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/><path d="m9 16 2 2 4-4"/>';
 
 function icon(name, size) {
@@ -634,7 +648,10 @@ function icon(name, size) {
 /* ================================================================== */
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function todayISO() { return new Date().toISOString().slice(0, 10); }
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 function daysBetween(fromISO, toISO) {
   const a = new Date(fromISO + "T00:00:00");
   const b = new Date(toISO + "T00:00:00");
@@ -655,11 +672,6 @@ function getCustomerStatus(c) {
   if (!c.lastVisitDate) return { key: "never", ratio: 999, days: null };
   const days = daysBetween(c.lastVisitDate, todayISO());
   const ratio = days / freq;
-  if (c.nextVisitDate) {
-    const untilFollowUp = daysBetween(todayISO(), c.nextVisitDate);
-    if (untilFollowUp <= 0) return { key: untilFollowUp < 0 ? "critical" : "due", ratio: Math.max(ratio, 1), days, followUpDue: true };
-    if (untilFollowUp <= 3) return { key: "soon", ratio: Math.max(ratio, 0.7), days, followUpDue: true };
-  }
   if (ratio >= 1.5) return { key: "critical", ratio, days };
   if (ratio >= 1) return { key: "due", ratio, days };
   if (ratio >= 0.7) return { key: "soon", ratio, days };
@@ -670,15 +682,76 @@ function suggestionScore(c, status) {
   const valueFactor = 1 + Math.min((c.avgOrderValue || 0) / 2000000, 1);
   return (status.ratio || 0) * w * valueFactor;
 }
-function getVisitTotal(v) {
+function getVisitSubtotal(v) {
   return (v.items || []).reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
 }
+function getVisitDiscountPercent(v) {
+  const pct = Number(v && v.discountPercent);
+  if (!isFinite(pct) || pct <= 0) return 0;
+  return Math.min(100, pct);
+}
+function getVisitDiscountAmount(v) {
+  const sub = getVisitSubtotal(v);
+  return Math.round(sub * getVisitDiscountPercent(v) / 100);
+}
+function getVisitTotal(v) {
+  const sub = getVisitSubtotal(v);
+  const pct = getVisitDiscountPercent(v);
+  if (!pct) return sub;
+  return Math.round(sub * (100 - pct) / 100);
+}
+function isCancelled(v) { return !!(v && v.cancelled === true); }
 function addDaysISO(iso, days) {
   const base = new Date((iso || todayISO()) + "T12:00:00");
   base.setDate(base.getDate() + (Number(days) || 0));
   return base.getFullYear() + "-" + String(base.getMonth()+1).padStart(2,"0") + "-" + String(base.getDate()).padStart(2,"0");
 }
 function invoiceIsPaymentTracked(v) { return !!(v && v.paymentTracking === true); }
+
+/* ---------- V5.17: visit answers + product price sync (V5.18: discount, V5.18.2 fixes) ---------- */
+function buildAnswersArray(obj) {
+  if (!obj || typeof obj !== "object") return [];
+  return Object.keys(obj)
+    .map((k) => ({ question: VISIT_QUESTION_TEXT[k] || k, answer: String(obj[k] == null ? "" : obj[k]).trim() }))
+    .filter((a) => a.answer);
+}
+function answersObjectFromVisit(v) {
+  const out = {};
+  ((v && v.answers) || []).forEach((a) => {
+    const q = VISIT_ALL_QUESTIONS.find((qq) => qq.text === a.question);
+    if (q) out[q.id] = a.answer;
+  });
+  return out;
+}
+
+let productPriceSaveTimer = null;
+function scheduleProductPriceSave() {
+  if (productPriceSaveTimer) clearTimeout(productPriceSaveTimer);
+  productPriceSaveTimer = setTimeout(async () => {
+    productPriceSaveTimer = null;
+    rebuildGlobalProducts();
+    await saveProducts();
+    await saveGlobalProducts();
+  }, 700);
+}
+async function flushProductPriceSave() {
+  if (!productPriceSaveTimer) return;
+  clearTimeout(productPriceSaveTimer);
+  productPriceSaveTimer = null;
+  rebuildGlobalProducts();
+  await saveProducts();
+  await saveGlobalProducts();
+}
+function syncProductPrice(productId, value) {
+  if (!productId) return;
+  const p = state.products.find((pp) => pp.id === productId);
+  if (!p) return;
+  const next = Number(value) || 0;
+  if (Number(p.unitPrice) === next) return;
+  p.unitPrice = next;
+  p.updatedAt = new Date().toISOString();
+  scheduleProductPriceSave();
+}
 function invoicePayments(v) { return Array.isArray(v && v.payments) ? v.payments : []; }
 function getInvoicePaid(v) {
   return invoicePayments(v).filter(p => p && p.status === "cleared").reduce((sum,p) => sum + Math.max(0, Number(p.amount)||0), 0);
@@ -697,7 +770,7 @@ function getInvoicePaymentLabel(v) {
   return "پرداخت نشده";
 }
 function getPaymentOverview() {
-  const invoices = state.visits.filter(v => v.items && v.items.length);
+  const invoices = state.visits.filter(v => v.items && v.items.length && !isCancelled(v));
   const tracked = invoices.filter(invoiceIsPaymentTracked);
   const open = tracked.filter(v=>getInvoiceBalance(v)>0);
   const receivables = open.reduce((sum,v)=>sum+getInvoiceBalance(v),0);
@@ -714,9 +787,13 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+const JALALI_YM_FORMATTER = (() => {
+  try { return new Intl.DateTimeFormat("en-US-u-ca-persian", { year: "numeric", month: "numeric" }); } catch { return null; }
+})();
 function getJalaliYearMonth(dateObj) {
   try {
-    const parts = new Intl.DateTimeFormat("en-US-u-ca-persian", { year: "numeric", month: "numeric" }).formatToParts(dateObj);
+    if (!JALALI_YM_FORMATTER) throw new Error("no formatter");
+    const parts = JALALI_YM_FORMATTER.formatToParts(dateObj);
     const y = parts.find((p) => p.type === "year").value;
     const m = parts.find((p) => p.type === "month").value;
     return y + "-" + m;
@@ -744,15 +821,24 @@ function buildInvoiceWhatsAppText(visit, customer, vendor) {
   if (customer && customer.lat !== "" && customer.lat != null && customer.lng !== "" && customer.lng != null) lines.push("لوکیشن: https://www.google.com/maps?q=" + encodeURIComponent(String(customer.lat) + "," + String(customer.lng)));
   lines.push("", "اقلام سفارش:");
   (visit.items || []).forEach((it, idx) => lines.push((idx + 1) + ". " + String(it.name || "").trim() + " — " + formatFaNum(it.qty)));
+  const waDiscount = getVisitDiscountAmount(visit);
+  if (waDiscount > 0) {
+    lines.push("", "جمع اقلام: " + formatToman(getVisitSubtotal(visit)));
+    lines.push("تخفیف " + formatFaNum(getVisitDiscountPercent(visit)) + "٪: −" + formatToman(waDiscount));
+  }
+  if ((visit.items || []).length) lines.push("مبلغ نهایی: " + formatToman(getVisitTotal(visit)));
   return lines.join("\n");
 }
 function buildInvoiceHtml(visit, customer, vendor) {
   const total = getVisitTotal(visit);
+  const subtotal = getVisitSubtotal(visit);
+  const discountPercent = getVisitDiscountPercent(visit);
+  const discountAmount = getVisitDiscountAmount(visit);
   const rows = (visit.items || []).map((it) =>
     "<tr><td>" + esc(it.name) + "</td><td style='text-align:center'>" + formatFaNum(it.qty) + "</td><td style='text-align:left'>" + formatToman(it.unitPrice) + "</td><td style='text-align:left;font-weight:800'>" + formatToman(it.qty * it.unitPrice) + "</td></tr>"
   ).join("");
-  const lat = (visit.lat || (customer && customer.lat) || "");
-  const lng = (visit.lng || (customer && customer.lng) || "");
+  const lat = Number(visit.lat || (customer && customer.lat) || NaN);
+  const lng = Number(visit.lng || (customer && customer.lng) || NaN);
   return "<!DOCTYPE html><html lang='fa' dir='rtl'><head><meta charset='UTF-8'><title>فاکتور #" + esc(visit.invoiceNumber || "") + "</title>" +
     "<style>" +
     "@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&family=Noto+Serif+Arabic:wght@700;900&display=swap');" +
@@ -772,7 +858,7 @@ function buildInvoiceHtml(visit, customer, vendor) {
     "<div><div class='muted'>مشتری</div><div style='font-weight:800;'>" + esc(customer ? customer.name : "—") + "</div>" +
     (customer && customer.address ? "<div class='muted' style='margin-top:2px;'>آدرس: " + esc(customer.address) + "</div>" : "") +
     (customer && customer.phone ? "<div class='muted' style='margin-top:2px;'>تلفن: " + esc(customer.phone) + "</div>" : "") +
-    (lat && lng ? "<div class='muted' style='margin-top:2px;'><a href='https://www.google.com/maps?q=" + lat + "," + lng + "'>موقعیت روی نقشه</a></div>" : "") +
+    (Number.isFinite(lat) && Number.isFinite(lng) ? "<div class='muted' style='margin-top:2px;'><a href='https://www.google.com/maps?q=" + encodeURIComponent(lat) + "," + encodeURIComponent(lng) + "'>موقعیت روی نقشه</a></div>" : "") +
     "</div>" +
     "<div style='text-align:left;'><div class='muted'>تاریخ</div><div style='font-weight:800;'>" + formatFaDate(visit.date) + "</div>" +
     "<div class='muted' style='margin-top:6px;'>روش پرداخت</div><div style='font-weight:800;'>" + esc(visit.paymentMethod || "—") + "</div>" +
@@ -780,7 +866,9 @@ function buildInvoiceHtml(visit, customer, vendor) {
     "</div></div>" +
     "<table><thead><tr><th>کالا</th><th style='text-align:center'>تعداد</th><th style='text-align:left'>قیمت واحد</th><th style='text-align:left'>جمع</th></tr></thead><tbody>" + rows + "</tbody></table>" +
     (visit.freeNote ? "<div class='muted' style='margin-top:10px;'>یادداشت: " + esc(visit.freeNote) + "</div>" : "") +
-    "<div class='total serif'><span>جمع کل</span><span>" + formatToman(total) + "</span></div>" +
+    (discountAmount > 0 ? "<div style='display:flex;justify-content:space-between;padding-top:12px;font-size:14px;'><span class='muted'>جمع اقلام</span><span>" + formatToman(subtotal) + "</span></div>" +
+      "<div style='display:flex;justify-content:space-between;padding-top:6px;font-size:14px;color:#B4483A;'><span>تخفیف " + formatFaNum(discountPercent) + "٪</span><span>−" + formatToman(discountAmount) + "</span></div>" : "") +
+    "<div class='total serif'><span>مبلغ نهایی</span><span>" + formatToman(total) + "</span></div>" +
     "<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>" +
     "</body></html>";
 }
@@ -824,6 +912,7 @@ const state = {
   productSort: "name",
   customerDetailId: null,
   toast: "",
+  visitScreen: { customerId: "", search: "" },
   // Smart Order Wizard
   wizard: null, // { step, bestPriceItems, selected, ordersByCompany, priorityCompanies, upsellIndex, invoices }
 };
@@ -982,11 +1071,13 @@ async function saveCompanies() { await DB.set("companies", state.companies); }
 async function saveAi() { await DB.set("aiAnalysis", { result: state.aiResult, at: state.aiAt }); }
 async function saveVendorProfile() { await DB.set("vendorProfile", state.vendorProfile); }
 
+const APP_VERSION = "v5.18.2";
+const BACKUP_COMPATIBLE_WITH = ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10", "v5.16", "v5.17", "v5.18", "v5.18.1", "v5.18.2"];
 function exportAllData() {
   const payload = {
     app: "Sales AI",
-    version: "v5.17",
-    compatibleWith: ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10", "v5.17"],
+    version: APP_VERSION,
+    compatibleWith: BACKUP_COMPATIBLE_WITH,
     exportedAt: new Date().toISOString(),
     customers: state.customers,
     products: state.products,
@@ -1018,6 +1109,10 @@ function handleImportFile(file) {
     if (!data || !Array.isArray(data.customers) || !Array.isArray(data.products) || !Array.isArray(data.visits)) {
       showToast("این فایل بکاپ Sales AI قابل شناسایی نیست"); return;
     }
+    const backupVersion = typeof data.version === "string" ? data.version.trim() : "";
+    const versionNote = (!backupVersion || backupVersion !== APP_VERSION)
+      ? "هشدار: این بکاپ از نسخه " + (backupVersion || "نامشخص") + " است و با نسخه فعلی (" + APP_VERSION + ") یکسان نیست؛ ممکن است برخی اطلاعات درست بازیابی نشوند. "
+      : "";
     const imported = {
       customers: data.customers,
       products: data.products.map(normalizeProduct),
@@ -1029,7 +1124,7 @@ function handleImportFile(file) {
     };
     const invoiceCount = imported.visits.filter(v => Array.isArray(v.items) && v.items.length).length;
     state.confirm = {
-      message: "بکاپ شناسایی شد: " + formatFaNum(imported.customers.length) + " مشتری، " + formatFaNum(imported.products.length) + " کالا و " + formatFaNum(invoiceCount) + " فاکتور. با تأیید، اطلاعات فعلی جایگزین می‌شود.",
+      message: versionNote + "بکاپ شناسایی شد: " + formatFaNum(imported.customers.length) + " مشتری، " + formatFaNum(imported.products.length) + " کالا و " + formatFaNum(invoiceCount) + " فاکتور. با تأیید، اطلاعات فعلی جایگزین می‌شود.",
       onConfirm: async () => {
         state.customers = imported.customers;
         state.products = imported.products;
@@ -1067,7 +1162,7 @@ function computeSmartSuggestions(limit) {
     const status = getCustomerStatus(c);
     const visits = state.visits.filter(v => v.customerId === c.id).sort((a,b) => b.date.localeCompare(a.date));
     const last = visits[0];
-    const lastOrder = visits.find(v => Array.isArray(v.items) && v.items.length);
+    const lastOrder = visits.find(v => Array.isArray(v.items) && v.items.length && !isCancelled(v));
     const daysSince = status.days == null ? 999 : status.days;
     let score = (PRIORITY_WEIGHT[c.priority] || 1) * 10;
     let reason = "";
@@ -1116,13 +1211,16 @@ function dailyPlanCandidates(coords) {
     if (coords && !hasGps) return null;
     const distance = coords && hasGps ? Math.round(haversineMeters(coords.lat, coords.lng, Number(c.lat), Number(c.lng))) : null;
     const visits = state.visits.filter(v => v.customerId === c.id).sort((a,b) => b.date.localeCompare(a.date));
-    const lastOrder = visits.find(v => Array.isArray(v.items) && v.items.length);
+    const lastOrder = visits.find(v => Array.isArray(v.items) && v.items.length && !isCancelled(v));
     const orderDays = lastOrder ? daysBetween(lastOrder.date, today) : 999;
     const urgency = status.key === "critical" ? 100 : status.key === "due" ? 82 : status.key === "soon" ? 58 : status.key === "never" ? 66 : 25;
     const priority = c.priority === "بالا" ? 100 : c.priority === "متوسط" ? 60 : 30;
     const value = Math.min(100, ((Number(c.avgOrderValue) || 0) / 3000000) * 100);
     const proximity = distance == null ? 0 : Math.max(0, 100 - (distance / 3000) * 100);
-    return { customer:c, status, distance, urgency, priority, value, proximity, orderDays };
+    const lastNote = (lastOrder && lastOrder.freeNote ? String(lastOrder.freeNote).trim() : "") || (Array.isArray(visits) && visits[0] && visits[0].freeNote ? String(visits[0].freeNote).trim() : "");
+    const nextVisitDate = c.nextVisitDate || "";
+    const lastVisit = visits[0] || null;
+    return { customer:c, status, distance, urgency, priority, value, proximity, orderDays, lastNote, nextVisitDate, lastVisit };
   }).filter(Boolean);
 }
 function routeOrder(items, coords) {
@@ -1143,8 +1241,9 @@ function routeOrder(items, coords) {
 }
 function buildDailyPackages(coords) {
   const candidates = dailyPlanCandidates(coords);
-  if (!candidates.length) return { near:[], sales:[] };
-  const pool = candidates.slice().sort((a,b) => {
+  if (!candidates.length) return { buyers:[], near:[], notes:[], sales:[] };
+  const today = todayISO();
+  const nearPool = candidates.slice().sort((a,b) => {
     const sa = a.urgency*0.45 + a.proximity*0.40 + a.priority*0.15;
     const sb = b.urgency*0.45 + b.proximity*0.40 + b.priority*0.15;
     return sb-sa;
@@ -1154,7 +1253,20 @@ function buildDailyPackages(coords) {
     const sb = b.urgency*0.40 + b.priority*0.25 + b.value*0.20 + b.proximity*0.15;
     return sb-sa;
   }).slice(0,5);
-  return { near: routeOrder(pool, coords), sales: routeOrder(sales, coords) };
+  const buyers = candidates.filter(x => x.orderDays < 999)
+    .sort((a,b) => b.orderDays - a.orderDays || b.value - a.value)
+    .slice(0,5);
+  const notes = candidates.filter(x => {
+    if (x.lastNote) return true;
+    if (!x.nextVisitDate) return false;
+    return x.nextVisitDate <= addDaysISO(today, 3);
+  }).sort((a,b) => {
+    const ua = x => (x.nextVisitDate && x.nextVisitDate <= today ? 2 : x.nextVisitDate ? 1 : 0);
+    const d = ua(b) - ua(a);
+    if (d) return d;
+    return b.urgency - a.urgency;
+  }).slice(0,5);
+  return { buyers: routeOrder(buyers, coords), near: routeOrder(nearPool, coords), notes: routeOrder(notes, coords), sales: routeOrder(sales, coords) };
 }
 function googleMapsDirectionsUrl(customer, coords) {
   if (!customer || customer.lat === "" || customer.lat == null || customer.lng === "" || customer.lng == null) return "";
@@ -1176,7 +1288,9 @@ function renderPlanStop(x, i) {
   const due=s.key === "critical" ? "خیلی عقب‌افتاده" : s.key === "due" ? "موعد ویزیت" : s.key === "soon" ? "نزدیک موعد" : s.key === "never" ? "بدون ویزیت" : "طبق برنامه";
   const mapUrl=googleMapsDirectionsUrl(c, state.gps.coords);
   const mapBtn=mapUrl ? '<a class="plan-stop-map" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",15)+'</a>' : '';
-  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small></span><span class="plan-stop-actions">'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
+  const noteLine = x.lastNote ? '<small style="color:var(--v1-muted);display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+icon("pencil",11)+' '+esc(x.lastNote)+'</small>' : '';
+  const nextLine = x.nextVisitDate ? '<small style="color:var(--amber);display:block;margin-top:2px;">ویزیت بعدی: '+formatFaDate(x.nextVisitDate)+'</small>' : '';
+  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+noteLine+nextLine+'</span><span class="plan-stop-actions">'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
 }
 function renderPlanPackage(title, subtitle, iconName, items) {
   return '<div class="plan-package"><div class="plan-package-head"><span class="pkg-icon">'+icon(iconName,17)+'</span><span style="min-width:0;flex:1"><strong>'+title+'</strong><small>'+subtitle+'</small></span><span class="daily-plan-badge">'+formatFaNum(items.length)+' مشتری</span></div>'+
@@ -1185,16 +1299,17 @@ function renderPlanPackage(title, subtitle, iconName, items) {
 }
 function renderDailyPlanModal() {
   const g=state.gps, coords=g.coords;
-  if (g.status === "loading") return '<div class="modal-backdrop"><div class="modal-sheet plan-sheet"><div class="modal-head"><span class="modal-title serif">امروز کجا برویم؟</span><button data-action="close-modal">'+icon("x",20)+'</button></div><div class="location-status"><span class="spin">'+icon("loader",16)+'</span>در حال بررسی موقعیت و ساخت دو مسیر پیشنهادی...</div></div></div>';
+  if (g.status === "loading") return '<div class="modal-backdrop"><div class="modal-sheet plan-sheet"><div class="modal-head"><span class="modal-title serif">امروز کجا برویم؟</span><button data-action="close-modal">'+icon("x",20)+'</button></div><div class="location-status"><span class="spin">'+icon("loader",16)+'</span>در حال بررسی موقعیت و ساخت بسته‌های پیشنهادی...</div></div></div>';
   const packages=buildDailyPackages(coords);
   const gpsText=coords ? "بر اساس موقعیت فعلی + نوبت ویزیت" : "موقعیت فعلی در دسترس نیست؛ پیشنهاد بر اساس نوبت ویزیت است";
-  return '<div class="modal-backdrop"><div class="modal-sheet plan-sheet"><div class="modal-head"><div><span class="modal-title serif">امروز کجا برویم؟</span><div class="small muted" style="margin-top:3px;">دو بسته پیشنهادی برای مقایسه</div></div><button data-action="close-modal">'+icon("x",20)+'</button></div>'+
-    '<div class="plan-toolbar"><span class="small muted">'+gpsText+'</span><button class="btn btn-outline btn-sm" data-action="refresh-daily-plan">'+icon("refresh",14)+' رفرش</button></div>'+
+  return '<div class="modal-backdrop"><div class="modal-sheet plan-sheet"><div class="modal-head"><div><span class="modal-title serif">امروز کجا برویم؟</span><div class="small muted" style="margin-top:3px;">سه بسته پیشنهادی برای مقایسه</div></div><button data-action="close-modal">'+icon("x",20)+'</button></div>'+
+    '<div class="plan-toolbar"><span class="small muted">'+gpsText+'</span><span class="flex gap-2"><button class="btn btn-outline btn-sm" data-action="detect-location" title="به‌روزرسانی موقعیت">'+icon("nav",14)+' موقعیت</button><button class="btn btn-outline btn-sm" data-action="refresh-daily-plan">'+icon("refresh",14)+' رفرش</button></span></div>'+
     (g.status === "error" ? '<div class="plan-intro" style="color:var(--brick)">'+esc(g.error)+'</div>' : '')+
-    '<div class="plan-intro">اپ فقط «نزدیک‌ترین مغازه» را انتخاب نمی‌کند؛ موعد ویزیت، اولویت مشتری و ارزش خرید را هم در نظر می‌گیرد. بسته اول بیشتر مسیر را جمع‌وجور می‌کند، بسته دوم وزن بیشتری به مشتریان مهم و فرصت فروش می‌دهد.</div>'+
-    renderPlanPackage("بسته ۱ · مسیر نزدیک و موعددار","تمرکز بیشتر روی مشتریان موعددار، با مسیر کوتاه‌تر","nav",packages.near)+
-    renderPlanPackage("بسته ۲ · فرصت فروش","تمرکز بیشتر روی موعد + اولویت + ارزش خرید، با توجه به فاصله","sparkles",packages.sales)+
-    '<div class="small muted" style="margin-top:10px;line-height:1.7;">این دو بسته «پیشنهاد» هستند؛ قبل از شروع مسیر می‌توانی هر مشتری را جداگانه انتخاب کنی.</div>'+
+    '<div class="plan-intro">اپ فقط «نزدیک‌ترین مغازه» را انتخاب نمی‌کند؛ موعد ویزیت، اولویت مشتری، ارزش خرید و یادداشت ویزیت قبلی را هم در نظر می‌گیرد. هر بسته یک زاویهٔ متفاوت دارد تا خودت انتخاب کنی.</div>'+
+    renderPlanPackage("بسته ۱ · خریداران قبلی","مغازه‌هایی که قبلاً خرید کرده‌اند و بیشترین فاصله از آخرین خرید را دارند","receipt",packages.buyers)+
+    renderPlanPackage("بسته ۲ · نزدیک‌ترین مسیر","تمرکز بیشتر روی مشتریان موعددار، با مسیر کوتاه‌تر","nav",packages.near)+
+    renderPlanPackage("بسته ۳ · یادداشت و ویزیت بعدی","مغازه‌هایی که یادداشت پیگیری دارند یا موعد ویزیتشان نزدیک است","pencil",packages.notes)+
+    '<div class="small muted" style="margin-top:10px;line-height:1.7;">این سه بسته «پیشنهاد» هستند؛ قبل از شروع مسیر می‌توانی هر مشتری را جداگانه انتخاب کنی.</div>'+
   '</div></div>';
 }
 function openLocation() {
@@ -1219,15 +1334,17 @@ function getCompanySalesStats() {
   const stats = {};
   state.companies.forEach(c => { stats[c.id] = { companyId:c.id, name:c.name, code:c.code||"", today:0, month:0, total:0, invoiceCountToday:0, invoiceCountMonth:0, qty:0, topProducts:{} }; });
   const monthKey = getJalaliYearMonth(new Date());
+  const productById = new Map(state.products.map(pp => [pp.id, pp]));
   state.visits.forEach(v => {
     const isToday = v.date === todayISO();
     const isMonth = getJalaliYearMonth(new Date(v.date + "T00:00:00")) === monthKey;
+    const cancelled = isCancelled(v);
     (v.items || []).forEach(it => {
-      const p = state.products.find(pp => pp.id === it.productId);
+      const p = productById.get(it.productId);
       const companyId = (p && p.companyId) || v.companyId || "";
       if (!companyId || !stats[companyId]) return;
-      const amount = (Number(it.qty)||0) * (Number(it.unitPrice)||0);
       const qty = Number(it.qty)||0;
+      const amount = cancelled ? 0 : qty * (Number(it.unitPrice)||0);
       const st = stats[companyId];
       st.total += amount; st.qty += qty;
       if (isToday) st.today += amount;
@@ -1242,7 +1359,7 @@ function getCompanySalesStats() {
   state.visits.forEach(v => {
     const companyIds = new Set();
     (v.items || []).forEach(it => {
-      const p = state.products.find(pp => pp.id === it.productId);
+      const p = productById.get(it.productId);
       const cid = (p && p.companyId) || v.companyId || "";
       if (cid && stats[cid]) companyIds.add(cid);
     });
@@ -1285,8 +1402,8 @@ function buildStatsSummary() {
   const statuses = state.customers.map(getCustomerStatus);
   const dueCount = statuses.filter((s) => s.key === "due" || s.key === "critical").length;
   const neverCount = statuses.filter((s) => s.key === "never").length;
-  const in30 = state.visits.filter((v) => daysBetween(v.date, todayISO()) <= 30).reduce((a, v) => a + getVisitTotal(v), 0);
-  const prev30 = state.visits.filter((v) => { const d = daysBetween(v.date, todayISO()); return d > 30 && d <= 60; }).reduce((a, v) => a + getVisitTotal(v), 0);
+  const in30 = state.visits.filter((v) => { if (isCancelled(v)) return false; const d = daysBetween(v.date, todayISO()); return d >= 0 && d <= 30; }).reduce((a, v) => a + getVisitTotal(v), 0);
+  const prev30 = state.visits.filter((v) => { if (isCancelled(v)) return false; const d = daysBetween(v.date, todayISO()); return d > 30 && d <= 60; }).reduce((a, v) => a + getVisitTotal(v), 0);
   const recentVisits = [...state.visits].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 20);
   const answerCounts = {};
   const notes = [];
@@ -1312,7 +1429,7 @@ function buildStatsSummary() {
 /* ================================================================== */
 
 function emptyCustomerForm(prefill) {
-  return Object.assign({ id: null, name: "", code: "", category: CATEGORIES[0], address: "", city: "", phone: "", priority: "متوسط", visitFrequency: 7, avgOrderValue: "", area: "", lastVisitDate: "", notes: "", lat: "", lng: "" }, prefill || {});
+  return Object.assign({ id: null, name: "", code: "", category: CATEGORIES[0], address: "", city: "", phone: "", buyerName: "", buyerPhone: "", priority: "متوسط", visitFrequency: 7, avgOrderValue: "", area: "", lastVisitDate: "", nextVisitDate: "", notes: "", lat: "", lng: "" }, prefill || {});
 }
 function openAddCustomer(prefillCoords) {
   const form = emptyCustomerForm(prefillCoords);
@@ -1731,21 +1848,20 @@ function emptyVisitForm(customerId, coords) {
   return {
     customerId, lat: coords ? coords.lat : "", lng: coords ? coords.lng : "",
     items: [], paymentMethod: "نقد", companyId: "", paymentTermsDays: 7,
-    answers: {}, freeNote: "", questionsExpanded: false,
+    answers: {}, freeNote: "", questionsExpanded: false, nextVisitDate: "", discountPercent: 0,
   };
 }
+function openVisitScreenFor(customerId) {
+  if (!state.customers.some((c) => c.id === customerId)) return;
+  visitScreenState().customerId = customerId;
+  state.tab = "visit";
+  state.modal = null;
+  render();
+}
 function openStartVisit(customerId, coords, companyId) {
-  const customer = state.customers.find(c => c.id === customerId) || {};
   const form = emptyVisitForm(customerId, coords);
   form.companyId = String(companyId || "");
-  form.purchasingManagerName = customer.purchasingManagerName || "";
-  form.purchasingManagerPhone = customer.purchasingManagerPhone || "";
-  form.noPurchaseReason = "";
-  form.followUpChoice = "";
-  form.buyerAvailability = "";
-  form.visitOutcome = "";
-  form.visitNote = "";
-  setModal({ type: "visit-intake", form });
+  setModal({ type: "visit", form });
 }
 function openEditVisit(visitId) {
   const v = state.visits.find((x) => x.id === visitId);
@@ -1759,7 +1875,8 @@ function openEditVisit(visitId) {
   const form = {
     customerId: v.customerId, lat: v.lat || "", lng: v.lng || "",
     items, paymentMethod: v.paymentMethod || "نقد", paymentTermsDays: Number(v.paymentTermsDays != null ? v.paymentTermsDays : 7), companyId: (items.length ? ((() => { const ids=[...new Set(items.map(it=>{const p=state.products.find(pp=>pp.id===it.productId); return p&&p.companyId||"";}))]; return ids.length===1?ids[0]:""; })()) : ""),
-    answers, freeNote: v.freeNote || "", questionsExpanded: false,
+    answers, freeNote: v.freeNote || "", questionsExpanded: false, nextVisitDate: v.nextVisitDate || "",
+    discountPercent: getVisitDiscountPercent(v),
   };
   setModal({ type: "visit", form, editingVisitId: v.id });
 }
@@ -1815,6 +1932,10 @@ function setInvoiceCompany(companyId) {
 }
 
 function updateVisitItemSilent(rid, key, value) {
+  if (key === "unitPrice") {
+    const row = state.modal.form.items.find((it) => it.rid === rid);
+    if (row && row.productId) syncProductPrice(row.productId, value);
+  }
   state.modal.form.items = state.modal.form.items.map((it) => {
     if (it.rid !== rid) return it;
     if (key === "productId" && value === "__new__") {
@@ -1858,18 +1979,6 @@ function returnInvoiceItemToSearch(rid) {
 }
 function updateVisitItem(rid, key, value) {
   updateVisitItemSilent(rid, key, value);
-  if (key === "unitPrice" && state.modal && state.modal.form) {
-    const row = state.modal.form.items.find(it => it.rid === rid);
-    const product = row && row.productId ? state.products.find(p => p.id === row.productId) : null;
-    const nextPrice = Math.max(0, Number(value) || 0);
-    if (product && Number(product.unitPrice) !== nextPrice) {
-      product.unitPrice = nextPrice;
-      product.updatedAt = new Date().toISOString();
-      saveProducts().catch(err => console.error("Could not persist updated catalog price", err));
-      rebuildGlobalProducts();
-      saveGlobalProducts().catch(err => console.error("Could not persist global catalog", err));
-    }
-  }
   render();
 }
 function toggleQuestionsExpanded() {
@@ -1887,6 +1996,7 @@ async function submitVisit() {
 
   const items = [];
   let productsChanged = false;
+  let unconfirmedItems = 0;
   for (const it of f.items) {
     if (!it.name || !it.name.trim() || !(Number(it.qty) > 0)) continue;
     let productId = it.productId;
@@ -1919,17 +2029,19 @@ async function submitVisit() {
       }
     } else {
       // A typed search term is not a product until the user explicitly chooses + New Product.
+      unconfirmedItems++;
       continue;
     }
     items.push({ id: uid(), productId, name: it.name.trim(), qty: Number(it.qty) || 0, unitPrice: Number(it.unitPrice) || 0 });
   }
+  if (unconfirmedItems > 0) {
+    const ok = confirm(formatFaNum(unconfirmedItems) + " قلم از اقلام فاکتور هنوز کالای ثبت‌شده نیست و با «+ کالای جدید» تأیید نشده است.\nاگر ادامه بدهید این اقلام در فاکتور ثبت نمی‌شوند. ادامه می‌دهید؟");
+    if (!ok) return;
+  }
   if (productsChanged) { rebuildGlobalProducts(); await saveProducts(); await saveGlobalProducts(); }
 
-  const answers = editingId ? (state.visits.find(v => v.id === editingId)?.answers || []) :
-    (f.answers ? Object.entries(f.answers).filter(([,value]) => value !== "" && value != null).map(([key,value]) => ({
-      question: ({q_reason:"دلیل عدم خرید / وضعیت نیاز",q_visit_outcome:"نتیجه ویزیت",q_buyer_availability:"وضعیت حضور مسئول خرید",q_purchasing_manager:"نام مسئول خرید",q_purchasing_phone:"شماره مسئول خرید",q_visit_note:"یادداشت ویزیت"})[key] || key,
-      answer: String(value)
-    })) : []);
+  const answers = buildAnswersArray(f.answers);
+  const nextVisitDate = f.nextVisitDate || "";
 
   if (editingId) {
     state.visits = state.visits.map((v) => {
@@ -1937,9 +2049,11 @@ async function submitVisit() {
       const terms = (f.paymentMethod === "نقد" || f.paymentMethod === "کارت‌به‌کارت / انتقال") ? 0 : Math.max(0, Number(f.paymentTermsDays)||0);
       const updated = Object.assign({}, v, {
         customerId: f.customerId, items, paymentMethod: f.paymentMethod, companyId: f.companyId || "",
-        answers, freeNote: f.freeNote || "",
+        answers: answers.length ? answers : (v.answers || []), freeNote: f.freeNote || "",
+        discountPercent: Math.max(0, Math.min(100, Number(f.discountPercent) || 0)),
         invoiceNumber: items.length ? (v.invoiceNumber || nextInvoiceNumber()) : v.invoiceNumber,
       });
+      updated.nextVisitDate = nextVisitDate;
       // Existing payment history and legacy tracking status are preserved while editing an invoice.
       if (invoiceIsPaymentTracked(v)) {
         updated.paymentTermsDays = terms;
@@ -1948,8 +2062,10 @@ async function submitVisit() {
       }
       return updated;
     });
+    state.customers = state.customers.map((c) => (c.id === f.customerId ? Object.assign({}, c, { nextVisitDate }) : c));
     await saveProducts();
     await saveVisits();
+    await saveCustomers();
     closeModal();
     const updated = state.visits.find((v) => v.id === editingId);
     if (updated && updated.items.length) setModal({ type: "invoiceView", visit: updated });
@@ -1958,27 +2074,24 @@ async function submitVisit() {
   }
 
   const terms = (f.paymentMethod === "نقد" || f.paymentMethod === "کارت‌به‌کارت / انتقال") ? 0 : Math.max(0, Number(f.paymentTermsDays)||0);
+  const discountPercent = Math.max(0, Math.min(100, Number(f.discountPercent) || 0));
+  const invoiceTotal = getVisitTotal({ items, discountPercent });
   const entry = {
     id: uid(), date: todayISO(), customerId: f.customerId,
     lat: f.lat || "", lng: f.lng || "",
     items, paymentMethod: f.paymentMethod, companyId: f.companyId || "",
     answers, freeNote: f.freeNote || "",
-    purchasingManagerName: f.purchasingManagerName || "",
-    purchasingManagerPhone: f.purchasingManagerPhone || "",
+    discountPercent,
     invoiceNumber: items.length ? nextInvoiceNumber() : null,
     paymentTracking: items.length > 0,
     paymentTermsDays: terms,
     dueDate: addDaysISO(todayISO(), terms),
-    payments: items.length && (f.paymentMethod === "نقد" || f.paymentMethod === "کارت‌به‌کارت / انتقال") ? [{id:uid(), date:todayISO(), amount:items.reduce((sum,it)=>sum+(Number(it.qty)||0)*(Number(it.unitPrice)||0),0), method:f.paymentMethod, status:"cleared", reference:"", note:"پرداخت هنگام ثبت فاکتور"}] :
-      (items.length && f.paymentMethod === "چک" ? [{id:uid(), date:todayISO(), amount:items.reduce((sum,it)=>sum+(Number(it.qty)||0)*(Number(it.unitPrice)||0),0), method:"چک", status:"pending", reference:"", note:"چک ثبت‌شده؛ در انتظار وصول"}] : []),
+    nextVisitDate,
+    payments: items.length && (f.paymentMethod === "نقد" || f.paymentMethod === "کارت‌به‌کارت / انتقال") ? [{id:uid(), date:todayISO(), amount:invoiceTotal, method:f.paymentMethod, status:"cleared", reference:"", note:"پرداخت هنگام ثبت فاکتور"}] :
+      (items.length && f.paymentMethod === "چک" ? [{id:uid(), date:todayISO(), amount:invoiceTotal, method:"چک", status:"pending", reference:"", note:"چک ثبت‌شده؛ در انتظار وصول"}] : []),
   };
   state.visits = state.visits.concat([entry]);
-  state.customers = state.customers.map((c) => (c.id === f.customerId ? Object.assign({}, c, {
-    lastVisitDate: entry.date,
-    purchasingManagerName: f.purchasingManagerName || c.purchasingManagerName || "",
-    purchasingManagerPhone: f.purchasingManagerPhone || c.purchasingManagerPhone || "",
-    nextVisitDate: ""
-  }) : c));
+  state.customers = state.customers.map((c) => (c.id === f.customerId ? Object.assign({}, c, { lastVisitDate: entry.date, nextVisitDate }) : c));
   await saveProducts();
   await saveVisits();
   await saveCustomers();
@@ -1989,6 +2102,36 @@ async function submitVisit() {
     showToast("ویزیت ثبت شد");
   }
 }
+function toggleInvoiceCancel(id) {
+  const v = state.visits.find((x) => x.id === id);
+  if (!v) return;
+  if (isCancelled(v)) {
+    state.confirm = {
+      message: "این فاکتور دوباره فعال بشه و در جمع‌ها حساب بشه؟",
+      onConfirm: async () => {
+        v.cancelled = false;
+        v.cancelledAt = "";
+        await saveVisits();
+        showToast("فاکتور دوباره فعال شد");
+        render();
+      },
+    };
+    render();
+    return;
+  }
+  state.confirm = {
+    message: "این فاکتور لغو بشه؟ فاکتور حذف نمی‌شود، فقط از جمع فروش و بدهی‌ها کنار گذاشته می‌شود.",
+    onConfirm: async () => {
+      v.cancelled = true;
+      v.cancelledAt = new Date().toISOString();
+      await saveVisits();
+      showToast("فاکتور لغو شد");
+      render();
+    },
+  };
+  render();
+}
+
 function deleteVisitConfirm(id) {
   state.confirm = {
     message: "این فاکتور/ویزیت حذف بشه؟",
@@ -2081,8 +2224,10 @@ app.addEventListener("input", (e) => {
   } else if (t.dataset.field) {
     if (t.dataset.item) {
       updateVisitItemSilent(t.dataset.item, t.dataset.field, t.value);
+      if (state.modal && state.modal.type === "visit" && (t.dataset.field === "qty" || t.dataset.field === "unitPrice")) refreshVisitTotals();
     } else if (state.modal && state.modal.form) {
       state.modal.form[t.dataset.field] = t.type === "checkbox" ? t.checked : t.value;
+      if (state.modal.type === "visit" && t.dataset.field === "discountPercent") refreshVisitTotals();
     }
   } else if (t.dataset.visitCustomerSearch !== undefined) {
     state.visitCustomerSearch = t.value; refreshVisitCustomerResults();
@@ -2096,6 +2241,17 @@ app.addEventListener("input", (e) => {
       const it=state.modal.form.items.find(x=>x.rid===rid);
       if (it) { it.productSearch=t.value; const box=document.querySelector('[data-invoice-product-results="'+rid+'"]'); if(box) box.innerHTML=renderInvoiceProductResults(it); }
     }
+  } else if (t.dataset.visitScreenSearch !== undefined) {
+    visitScreenState().search = t.value;
+    const pos = t.selectionStart;
+    render();
+    const next = document.querySelector('[data-visit-screen-search]');
+    if (next) { next.focus(); try { next.setSelectionRange(pos, pos); } catch (e) {} }
+  } else if (t.dataset.buyerField) {
+    const vs = visitScreenState();
+    if (vs.customerId) {
+      state.customers = state.customers.map((c) => (c.id === vs.customerId ? Object.assign({}, c, { [t.dataset.buyerField]: t.value }) : c));
+    }
   } else if (t.dataset.productSearch !== undefined) {
     state.productSearch = t.value; const pos=t.selectionStart; render(); const next=document.querySelector('[data-product-search]'); if(next){next.focus(); try{next.setSelectionRange(pos,pos);}catch(e){}}
   }
@@ -2108,13 +2264,13 @@ app.addEventListener("change", (e) => {
   if (t.dataset.action === "wizard-payment-terms") { if (state.wizard) { state.wizard.paymentTermsDays = Math.max(0, Math.min(3650, Number(t.value) || 0)); scheduleWizardStateSave(); } return; }
   if (t.id === "import-file-input") { if (t.files && t.files[0]) handleImportFile(t.files[0]); t.value = ""; return; }
   if (t.dataset.answerQ) { setVisitAnswer(t.dataset.answerQ, t.value); return; }
+  if (t.dataset.buyerField) { saveBuyerField(t.dataset.buyerField, t.value); return; }
   if (t.dataset.field) {
     if (t.dataset.item) {
       updateVisitItem(t.dataset.item, t.dataset.field, t.value);
     } else if (state.modal && state.modal.form) {
       state.modal.form[t.dataset.field] = t.type === "checkbox" ? t.checked : t.value;
       if (state.modal.type === "payment-record" && t.dataset.field === "method") render();
-      if (state.modal.type === "visit-intake") render();
     }
   }
 });
@@ -2163,12 +2319,7 @@ function handleAction(action, id, el) {
     const sel = document.getElementById("quick-invoice-customer");
     const companySel = document.getElementById("quick-invoice-company");
     if (sel && sel.value) {
-      const form = emptyVisitForm(sel.value, state.gps.coords);
-      form.companyId = companySel ? companySel.value : ((state.modal && state.modal.form && state.modal.form.companyId) || "");
-      const customer = state.customers.find(c => c.id === sel.value) || {};
-      form.purchasingManagerName = customer.purchasingManagerName || "";
-      form.purchasingManagerPhone = customer.purchasingManagerPhone || "";
-      setModal({ type: "visit", form });
+      openStartVisit(sel.value, state.gps.coords, companySel ? companySel.value : ((state.modal && state.modal.form && state.modal.form.companyId) || ""));
     } else {
       showToast("ابتدا مشتری را انتخاب کنید");
     }
@@ -2195,29 +2346,19 @@ function handleAction(action, id, el) {
 
   if (action === "detect-location") { detectLocation(); return; }
   if (action === "start-visit-matched") {
-    openStartVisit(id, state.gps.coords);
+    openVisitScreenFor(id);
     return;
   }
-  if (action === "visit-create-invoice") {
-    const current = state.modal && state.modal.type === "visit-intake" ? state.modal.form : null;
-    if (!current) return;
-    const form = emptyVisitForm(current.customerId, {lat:current.lat,lng:current.lng});
-    form.companyId = current.companyId || "";
-    form.purchasingManagerName = current.purchasingManagerName || "";
-    form.purchasingManagerPhone = current.purchasingManagerPhone || "";
-    form.answers = {
-      q_reason: current.noPurchaseReason || "",
-      q_visit_outcome: "خرید انجام شد",
-      q_buyer_availability: current.buyerAvailability || "",
-      q_purchasing_manager: current.purchasingManagerName || "",
-      q_purchasing_phone: current.purchasingManagerPhone || "",
-      q_visit_note: current.visitNote || ""
-    };
-    form.freeNote = current.visitNote || "";
-    setModal({type:"visit",form,visitIntakeData:Object.assign({},current)});
+  if (action === "visit-pick-customer") { openVisitScreenFor(id); return; }
+  if (action === "visit-change-customer") { visitScreenState().customerId = ""; render(); return; }
+  if (action === "visit-start-invoice") { openStartVisit(id, null); return; }
+  if (action === "visit-no-purchase") { openVisitOnly(id); return; }
+  if (action === "visit-only-choice") {
+    if (state.modal && state.modal.form) state.modal.form[el.dataset.q] = el.dataset.val;
+    render();
     return;
   }
-  if (action === "visit-save-no-purchase") { saveNoPurchaseVisit(); return; }
+  if (action === "submit-visit-only") { submitVisitOnly(); return; }
   if (action === "edit-invoice") { openEditVisit(id); return; }
   if (action === "toggle-questions") { toggleQuestionsExpanded(); return; }
   if (action === "whatsapp-invoice") {
@@ -2233,10 +2374,10 @@ function handleAction(action, id, el) {
   if (action === "back-to-customers") { state.customerDetailId = null; render(); return; }
   if (action === "start-visit-manual") {
     const sel = document.getElementById("manual-customer-select");
-    if (sel && sel.value) openStartVisit(sel.value, null);
+    if (sel && sel.value) openVisitScreenFor(sel.value);
     return;
   }
-  if (action === "start-visit-from-card") { openStartVisit(id, null); return; }
+  if (action === "start-visit-from-card") { openVisitScreenFor(id); return; }
   if (action === "add-item-row") { addItemRowToVisit(); return; }
   if (action === "new-invoice-product") { startNewInvoiceProduct(id); return; }
   if (action === "new-invoice-variant") { startInvoiceProductVariant(id); return; }
@@ -2250,6 +2391,7 @@ function handleAction(action, id, el) {
     if (v) setModal({ type: "invoiceView", visit: v });
     return;
   }
+  if (action === "toggle-invoice-cancel") { toggleInvoiceCancel(id); return; }
   if (action === "delete-visit") { deleteVisitConfirm(id); return; }
   if (action === "print-invoice") {
     const v=state.visits.find(x=>x.id===(state.modal&&state.modal.visit?state.modal.visit.id:""));
@@ -2302,6 +2444,7 @@ function handleAction(action, id, el) {
 
 const TABS = [
   { key: "dashboard", label: "داشبورد", icon: "home" },
+  { key: "visit", label: "ویزیت", icon: "nav" },
   { key: "customers", label: "مشتریان", icon: "store" },
   { key: "products", label: "کالاها", icon: "box" },
   { key: "invoices", label: "فاکتورها", icon: "receipt" },
@@ -2338,7 +2481,7 @@ function render() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.17</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.18.2</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
@@ -2363,6 +2506,7 @@ function renderToast() {
 
 function renderTab() {
   if (state.tab === "dashboard") return renderDashboard();
+  if (state.tab === "visit") return renderVisitTab();
   if (state.tab === "customers") return renderCustomers();
   if (state.tab === "products") return renderProducts();
   if (state.tab === "invoices") return renderInvoices();
@@ -2381,11 +2525,11 @@ function renderDashboard() {
 
   const smart = computeSmartSuggestions(3);
   const dueToday = state.customers.filter(c => { const s=getCustomerStatus(c); return s.key === "due" || s.key === "critical"; }).length;
-  const todayTotal = state.visits.filter(v => v.date === todayISO()).reduce((a,v)=>a+getVisitTotal(v),0);
+  const todayTotal = state.visits.filter(v => v.date === todayISO() && !isCancelled(v)).reduce((a,v)=>a+getVisitTotal(v),0);
   const thisJalaliMonth = getJalaliYearMonth(new Date());
-  const monthTotal = state.visits.filter(v => getJalaliYearMonth(new Date(v.date+"T00:00:00"))===thisJalaliMonth).reduce((a,v)=>a+getVisitTotal(v),0);
-  const todayInvoices = state.visits.filter(v=>v.date===todayISO() && v.items && v.items.length).length;
-  const todayCustomers = new Set(state.visits.filter(v=>v.date===todayISO()).map(v=>v.customerId)).size;
+  const monthTotal = state.visits.filter(v => getJalaliYearMonth(new Date(v.date+"T00:00:00"))===thisJalaliMonth && !isCancelled(v)).reduce((a,v)=>a+getVisitTotal(v),0);
+  const todayInvoices = state.visits.filter(v=>v.date===todayISO() && v.items && v.items.length && !isCancelled(v)).length;
+  const todayCustomers = new Set(state.visits.filter(v=>v.date===todayISO() && !isCancelled(v)).map(v=>v.customerId)).size;
   const totalCustomers = state.customers.length;
   const topProducts = computeTopProducts(3);
   const paymentOverview = getPaymentOverview();
@@ -2409,7 +2553,7 @@ function renderDashboard() {
       '</button>' +
       renderAiCard() +
       '<button class="daily-plan-card" data-action="open-daily-plan">' +
-        '<div class="daily-plan-head"><span class="daily-plan-icon">' + icon("route",18) + '</span><span class="daily-plan-copy"><strong>امروز کجا برویم؟</strong></span><span class="daily-plan-badge">۲ پیشنهاد</span></div>' +
+        '<div class="daily-plan-head"><span class="daily-plan-icon">' + icon("route",18) + '</span><span class="daily-plan-copy"><strong>امروز کجا برویم؟</strong></span><span class="daily-plan-badge">۳ پیشنهاد</span></div>' +
       '</button>' +
       '<button class="dashboard-v5-primary" data-action="open-location">' + icon("nav", 19) + '<span>مغازه‌های اطراف من</span></button>' +
       '<div class="dashboard-v5-section-title"><span>دسترسی سریع</span></div>' +
@@ -2563,15 +2707,14 @@ function renderCustomerDetail(id) {
   if (!c) { state.customerDetailId = null; return renderCustomers(); }
   const status = getCustomerStatus(c);
   const meta = STATUS_META[status.key];
-  const invoices = state.visits.filter((v) => v.customerId === id && v.items && v.items.length).sort((a, b) => (a.date < b.date ? 1 : -1));
-  const nonInvoiceVisits = state.visits.filter(v => v.customerId === id && (!v.items || !v.items.length)).sort((a,b) => (a.date < b.date ? 1 : -1));
+  const invoices = state.visits.filter((v) => v.customerId === id && v.items && v.items.length && !isCancelled(v)).sort((a, b) => (a.date < b.date ? 1 : -1));
   const totalAll = invoices.reduce((a, v) => a + getVisitTotal(v), 0);
 
   return (
     '<div class="section" style="padding-bottom:24px;">' +
       '<button class="flex items-center gap-1" style="color:var(--ink-soft);font-size:12px;font-weight:800;align-self:flex-start;" data-action="back-to-customers">' + icon("arrowright", 15) + "بازگشت به مشتریان</button>" +
 
-      '<button class="btn btn-primary btn-block" style="padding:16px;font-size:15px;" data-action="start-visit-from-card" data-id="' + c.id + '">' + icon("receipt", 18) + "شروع ویزیت برای " + esc(c.name) + "</button>" +
+      '<button class="btn btn-primary btn-block" style="padding:16px;font-size:15px;" data-action="start-visit-from-card" data-id="' + c.id + '">' + icon("receipt", 18) + "ثبت فاکتور برای " + esc(c.name) + "</button>" +
 
       '<div class="card">' +
         '<div class="flex items-start justify-between gap-2">' +
@@ -2582,9 +2725,6 @@ function renderCustomerDetail(id) {
         '<div class="flex-col gap-1 small muted" style="margin-top:10px;">' +
           (c.address ? '<div class="flex items-center gap-2">' + icon("map", 12) + esc(c.address) + "</div>" : "") +
           (c.phone ? '<div class="flex items-center gap-2">' + icon("phone", 12) + esc(c.phone) + "</div>" : "") +
-          (c.purchasingManagerName ? '<div class="flex items-center gap-2">' + icon("user", 12) + "مسئول خرید: " + esc(c.purchasingManagerName) + "</div>" : "") +
-          (c.purchasingManagerPhone ? '<div class="flex items-center gap-2">' + icon("phone", 12) + "تلفن مسئول خرید: " + esc(c.purchasingManagerPhone) + "</div>" : "") +
-          (c.nextVisitDate ? '<div class="flex items-center gap-2" style="color:var(--amber-dark);font-weight:800;">' + icon("calendar", 12) + "پیگیری بعدی: " + formatFaDate(c.nextVisitDate) + "</div>" : "") +
           '<div class="flex items-center gap-2">' + icon("clock", 12) + "آخرین ویزیت: " + formatFaDate(c.lastVisitDate) + " · بازه: هر " + formatFaNum(c.visitFrequency) + " روز</div>" +
           '<div class="flex items-center gap-2">اولویت: ' + esc(c.priority) + "</div>" +
           (c.lat && c.lng ? '<a href="https://www.google.com/maps?q=' + c.lat + "," + c.lng + '" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2" style="color:var(--amber-dark);font-weight:700;">' + icon("nav", 12) + "نمایش موقعیت روی نقشه</a>" : "") +
@@ -2596,20 +2736,6 @@ function renderCustomerDetail(id) {
         "</div>" +
       "</div>" +
 
-      (nonInvoiceVisits.length ? '<div style="margin-bottom:14px;">' +
-        '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">سوابق ویزیت بدون خرید</div>' +
-        '<div class="flex-col gap-2">' + nonInvoiceVisits.slice(0,8).map(v =>
-          '<div class="v1-list-card" style="padding:10px 12px;">' +
-            '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">' +
-              '<strong style="font-size:12px;">'+formatFaDate(v.date)+'</strong>' +
-              '<span class="badge">'+(v.visitOutcome==="decision_pending"?"تصمیم به بعد موکول شد":"خرید انجام نشد")+'</span>' +
-            '</div>' +
-            (v.noPurchaseReason ? '<div class="small muted" style="margin-top:5px;">دلیل: '+esc(v.noPurchaseReason)+'</div>' : '') +
-            (v.followUpDate ? '<div class="small" style="margin-top:4px;color:var(--amber-dark);font-weight:800;">پیگیری: '+formatFaDate(v.followUpDate)+'</div>' : '') +
-            (v.purchasingManagerName || v.purchasingManagerPhone ? '<div class="small muted" style="margin-top:4px;">مسئول خرید: '+esc(v.purchasingManagerName||"—")+' · '+esc(v.purchasingManagerPhone||"—")+'</div>' : '') +
-            (v.freeNote ? '<div class="small muted" style="margin-top:4px;">'+esc(v.freeNote)+'</div>' : '') +
-          '</div>'
-        ).join('') + '</div></div>' : '') +
       '<div>' +
         '<div class="flex items-center justify-between" style="margin-bottom:8px;">' +
           '<span style="font-size:13px;font-weight:800;">فاکتورهای این مشتری</span>' +
@@ -2621,6 +2747,207 @@ function renderCustomerDetail(id) {
       "</div>" +
     "</div>"
   );
+}
+
+/* ================================================================== */
+/* visit screen (V5.17, kept in V5.18.2)                                                  */
+/* ================================================================== */
+
+function visitScreenState() {
+  if (!state.visitScreen) state.visitScreen = { customerId: "", search: "" };
+  return state.visitScreen;
+}
+function customerTopProducts(customerId, limit) {
+  const agg = {};
+  state.visits.forEach((v) => {
+    if (v.customerId !== customerId || !v.items) return;
+    v.items.forEach((it) => {
+      const key = it.productId || ("n:" + (it.name || ""));
+      if (!agg[key]) agg[key] = { name: it.name || "—", qty: 0, amount: 0, last: "" };
+      agg[key].qty += Number(it.qty) || 0;
+      agg[key].amount += (Number(it.qty) || 0) * (Number(it.unitPrice) || 0);
+      if (!agg[key].last || v.date > agg[key].last) agg[key].last = v.date || "";
+    });
+  });
+  return Object.keys(agg).map((k) => agg[k]).sort((a, b) => b.amount - a.amount).slice(0, limit || 4);
+}
+
+function renderVisitTab() {
+  const vs = visitScreenState();
+  const cust = vs.customerId ? state.customers.find((c) => c.id === vs.customerId) : null;
+  if (!cust) {
+    vs.customerId = "";
+    return renderVisitPicker(vs);
+  }
+  return renderVisitShopCard(cust);
+}
+
+function renderVisitPicker(vs) {
+  const q = normalizeName(vs.search || "");
+  const list = state.customers
+    .map((c) => Object.assign({}, c, { status: getCustomerStatus(c) }))
+    .filter((c) => !q || normalizeName(c.name + " " + (c.code || "") + " " + (c.phone || "") + " " + (c.address || "")).includes(q))
+    .sort((a, b) => suggestionScore(b, b.status) - suggestionScore(a, a.status));
+  const rows = list.slice(0, 40).map((c) => {
+    const meta = STATUS_META[c.status.key];
+    return '<button class="v1-list-card" data-action="visit-pick-customer" data-id="' + c.id + '" style="text-align:right;width:100%;display:block;">' +
+      '<div class="flex items-start justify-between gap-2">' +
+        '<div style="min-width:0;"><div style="font-weight:900;font-size:14px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : '') + '</div>' +
+        '<div class="small muted" style="margin-top:3px;">' + esc(c.category || 'عمومی') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div></div>' +
+        '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + '</span>' +
+      '</div>' +
+      '<div class="small muted" style="margin-top:8px;">' + icon("clock", 12) + ' آخرین ویزیت: ' + formatFaDate(c.lastVisitDate) + (c.nextVisitDate ? ' · بعدی: ' + formatFaDate(c.nextVisitDate) : '') + '</div>' +
+    '</button>';
+  }).join("");
+  return '<div class="section" style="padding-bottom:24px;">' +
+    '<div class="v1-page-head"><div><div class="v1-page-title">ویزیت</div><div class="v1-page-sub">مغازه را انتخاب کن تا ویزیت را شروع کنیم</div></div></div>' +
+    '<div class="search-wrap"><input class="input" placeholder="جستجوی مغازه، کد یا تلفن..." data-visit-screen-search value="' + esc(vs.search) + '" />' + '<span class="search-icon">' + icon("search", 15) + '</span></div>' +
+    (rows
+      ? '<div class="flex-col gap-2" style="margin-top:10px;">' + rows + '</div>' +
+        (list.length > 40 ? '<div class="small muted" style="margin-top:10px;text-align:center;">' + formatFaNum(list.length - 40) + ' مغازه دیگر — جستجو را دقیق‌تر کن.</div>' : '')
+      : renderEmpty("search", "مغازه‌ای پیدا نشد", "جستجو را تغییر بده یا از تب مشتریان مغازه جدید بساز.")) +
+  '</div>';
+}
+
+function renderVisitShopCard(c) {
+  const status = getCustomerStatus(c);
+  const meta = STATUS_META[status.key];
+  const top = customerTopProducts(c.id, 4);
+  const invoices = state.visits.filter((v) => v.customerId === c.id && v.items && v.items.length && !isCancelled(v)).sort((a, b) => (a.date < b.date ? 1 : -1));
+  const last = invoices[0];
+  return '<div class="section" style="padding-bottom:24px;">' +
+    '<div class="v1-page-head"><div><div class="v1-page-title">' + esc(c.name) + '</div>' +
+      '<div class="v1-page-sub">' + esc(c.category || 'عمومی') + (c.code ? ' · کد ' + esc(c.code) : '') + '</div></div>' +
+      '<button class="btn btn-outline btn-sm" data-action="visit-change-customer">تغییر مغازه</button></div>' +
+
+    '<div class="v1-list-card">' +
+      '<div class="flex items-center justify-between gap-2">' +
+        '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + '</span>' +
+        '<span class="small muted">' + (status.days == null ? 'بدون سابقه' : formatFaNum(status.days) + ' روز از آخرین ویزیت') + '</span>' +
+      '</div>' +
+      (c.phone || c.address ? '<div style="margin-top:9px;">' +
+        (c.phone ? '<div class="small" style="margin-top:3px;">' + icon("phone", 12) + ' ' + esc(c.phone) + '</div>' : '') +
+        (c.address ? '<div class="small muted" style="margin-top:3px;">' + icon("map", 12) + ' ' + esc(c.address) + '</div>' : '') +
+      '</div>' : '') +
+      '<div class="small muted" style="margin-top:8px;">' + icon("clock", 12) + ' آخرین ویزیت: ' + formatFaDate(c.lastVisitDate) + ' · ویزیت بعدی: ' + formatFaDate(c.nextVisitDate) + '</div>' +
+      (c.lat && c.lng ? '<a href="https://www.google.com/maps?q=' + c.lat + ',' + c.lng + '" target="_blank" rel="noopener noreferrer" class="small" style="display:inline-block;margin-top:8px;font-weight:800;color:var(--green);">مسیریابی روی نقشه</a>' : '') +
+    '</div>' +
+
+    '<div class="v1-list-card" style="margin-top:10px;">' +
+      '<div class="v1-section-label">مسئول خرید</div>' +
+      '<div class="grid-2" style="margin-top:8px;">' +
+        field("نام", '<input class="input" data-buyer-field="buyerName" value="' + esc(c.buyerName || "") + '" placeholder="مثلاً آقای رضایی" />') +
+        field("تلفن", '<input class="input" data-buyer-field="buyerPhone" value="' + esc(c.buyerPhone || "") + '" placeholder="۰۹..." />') +
+      '</div>' +
+      (c.buyerPhone ? '<a class="btn btn-outline btn-sm" style="margin-top:8px;display:inline-flex;" href="tel:' + esc(c.buyerPhone) + '">' + icon("phone", 13) + 'تماس با مسئول خرید</a>' : '') +
+    '</div>' +
+
+    (top.length ? '<div class="v1-list-card" style="margin-top:10px;">' +
+      '<div class="v1-section-label">کالاهای همیشگی این مغازه</div>' +
+      '<div class="flex-col gap-2" style="margin-top:8px;">' + top.map((t) =>
+        '<div class="flex items-center justify-between gap-2" style="font-size:12.5px;">' +
+          '<span style="font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(t.name) + '</span>' +
+          '<span class="small muted" style="white-space:nowrap;">' + formatFaNum(t.qty) + ' عدد · ' + formatToman(t.amount) + '</span>' +
+        '</div>').join("") + '</div></div>' : '') +
+
+    (last ? '<div class="v1-list-card" style="margin-top:10px;">' +
+      '<div class="v1-section-label">آخرین فاکتور</div>' +
+      '<div class="flex items-center justify-between gap-2" style="margin-top:6px;">' +
+        '<span class="small muted">' + formatFaDate(last.date) + ' · #' + formatFaNum(last.invoiceNumber) + '</span>' +
+        '<span class="serif" style="font-weight:900;">' + formatToman(getVisitTotal(last)) + '</span>' +
+      '</div>' +
+      '<button class="btn btn-outline btn-sm" style="margin-top:8px;" data-action="view-invoice" data-id="' + last.id + '">' + icon("receipt", 13) + 'مشاهده فاکتور</button>' +
+    '</div>' : '') +
+
+    '<div class="v1-action-bar" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">' +
+      '<button class="btn btn-primary" style="width:100%;" data-action="visit-start-invoice" data-id="' + c.id + '">' + icon("receipt", 15) + 'خرید کرد — ثبت فاکتور</button>' +
+      '<button class="btn btn-outline" style="width:100%;" data-action="visit-no-purchase" data-id="' + c.id + '">' + icon("x", 15) + 'خرید نکرد</button>' +
+    '</div>' +
+  '</div>';
+}
+
+async function saveBuyerField(fieldName, value) {
+  const vs = visitScreenState();
+  if (!vs.customerId) return;
+  const v = String(value == null ? "" : value);
+  state.customers = state.customers.map((c) => (c.id === vs.customerId ? Object.assign({}, c, { [fieldName]: v }) : c));
+  await saveCustomers();
+}
+
+/* ---------- visit-only (no purchase) ---------- */
+
+function openVisitOnly(customerId) {
+  const c = state.customers.find((x) => x.id === customerId);
+  if (!c) return;
+  setModal({
+    type: "visitOnly",
+    form: {
+      customerId,
+      q_reason: "", q_competitor: "", q_next_visit: "", q_buyer_time: "",
+      buyerName: c.buyerName || "", buyerPhone: c.buyerPhone || "", note: "",
+    },
+  });
+}
+
+function returnInToDays(label) {
+  const n = parseInt(String(label || "").replace(/[^0-9\u06F0-\u06F9]/g, "").replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0)), 10);
+  return isNaN(n) ? 0 : n;
+}
+
+async function submitVisitOnly() {
+  const f = state.modal && state.modal.form;
+  if (!f) return;
+  const cust = state.customers.find((c) => c.id === f.customerId);
+  if (!cust) return;
+  const answersObj = {
+    q_reason: f.q_reason, q_competitor: f.q_competitor,
+    q_next_visit: f.q_next_visit, q_buyer_time: f.q_buyer_time, q_buyer_phone: f.buyerPhone,
+  };
+  const answers = buildAnswersArray(answersObj);
+  const days = returnInToDays(f.q_next_visit);
+  const nextVisitDate = days > 0 ? addDaysISO(todayISO(), days) : "";
+  const entry = {
+    id: uid(), customerId: f.customerId, date: todayISO(), invoiceNumber: null,
+    paymentMethod: "", items: [], visitType: "no-purchase",
+    freeNote: f.note || "", lat: "", lng: "", answers,
+    paymentTracking: false, payments: [],
+  };
+  if (nextVisitDate) entry.nextVisitDate = nextVisitDate;
+  state.visits = state.visits.concat([entry]);
+  state.customers = state.customers.map((c) => (c.id === f.customerId
+    ? Object.assign({}, c, { lastVisitDate: entry.date }, nextVisitDate ? { nextVisitDate } : {}, f.buyerName ? { buyerName: f.buyerName } : {}, f.buyerPhone ? { buyerPhone: f.buyerPhone } : {})
+    : c));
+  await saveVisits();
+  await saveCustomers();
+  state.modal = null;
+  visitScreenState().customerId = "";
+  showToast("ویزیت بدون خرید ثبت شد");
+}
+
+function renderVisitOnlyModal(m) {
+  const f = m.form;
+  const cust = state.customers.find((c) => c.id === f.customerId);
+  const chips = (qid, options, current) => '<div class="flex gap-2" style="flex-wrap:wrap;">' + options.map((o) =>
+    '<button type="button" class="chip' + (current === o ? ' active' : '') + '" data-action="visit-only-choice" data-q="' + qid + '" data-val="' + esc(o) + '">' + esc(o) + '</button>').join("") + '</div>';
+  return '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">' +
+    '<div class="modal-head" style="padding:14px 18px 10px;margin:0;border-bottom:1px solid var(--v1-line);">' +
+      '<div><div class="v1-page-title" style="font-size:17px;">ویزیت بدون خرید</div><div class="v1-page-sub">' + esc(cust ? cust.name : '—') + '</div></div>' +
+      '<button data-action="close-modal">' + icon("x", 20) + '</button></div>' +
+    '<div style="padding:14px 18px 22px;">' +
+      '<div class="field"><span class="field-label">چرا خرید نکرد؟</span>' + chips("q_reason", VISIT_QUESTIONS[0].options, f.q_reason) + '</div>' +
+      '<div class="field" style="margin-top:12px;"><span class="field-label">قیمت ما نسبت به رقبا؟</span>' + chips("q_competitor", VISIT_QUESTIONS[1].options, f.q_competitor) + '</div>' +
+      '<div class="field" style="margin-top:12px;"><span class="field-label">دوباره کِی سر بزنم؟</span>' + chips("q_next_visit", RETURN_IN_OPTIONS, f.q_next_visit) + '</div>' +
+      '<div class="field" style="margin-top:12px;"><span class="field-label">مسئول خرید کِی در مغازه هست؟</span>' + chips("q_buyer_time", BUYER_TIMING_OPTIONS, f.q_buyer_time) + '</div>' +
+      '<div class="grid-2" style="margin-top:12px;">' +
+        field("نام مسئول خرید", '<input class="input" data-field="buyerName" value="' + esc(f.buyerName) + '" placeholder="اختیاری" />') +
+        field("تلفن مسئول خرید", '<input class="input" data-field="buyerPhone" value="' + esc(f.buyerPhone) + '" placeholder="اختیاری" />') +
+      '</div>' +
+      '<div style="margin-top:12px;">' + field("یادداشت", '<textarea class="textarea" rows="2" data-field="note">' + esc(f.note) + '</textarea>') + '</div>' +
+      '<div class="v1-action-bar" style="margin-top:14px;">' +
+        '<button class="btn btn-outline" data-action="close-modal">انصراف</button>' +
+        '<button class="btn btn-primary" data-action="submit-visit-only">ثبت ویزیت</button>' +
+      '</div>' +
+    '</div></div></div>';
 }
 
 /* ================================================================== */
@@ -2649,8 +2976,8 @@ function renderProducts(){
 /* ================================================================== */
 
 function renderInvoices() {
-  const total = state.visits.filter(v=>v.items&&v.items.length).reduce((a,v)=>a+getVisitTotal(v),0);
-  const count = state.visits.filter(v=>v.items&&v.items.length).length;
+  const total = state.visits.filter(v=>v.items&&v.items.length&&!isCancelled(v)).reduce((a,v)=>a+getVisitTotal(v),0);
+  const count = state.visits.filter(v=>v.items&&v.items.length&&!isCancelled(v)).length;
   return (
     '<div class="section" style="padding-bottom:24px;">' +
       '<div class="v1-page-head"><div><div class="v1-page-title">فاکتور</div><div class="v1-page-sub">ثبت سفارش مشتری و سوابق فروش</div></div>' +
@@ -2685,17 +3012,25 @@ function renderInvoiceRow(v) {
   const cust = state.customers.find((c) => c.id === v.customerId);
   const total = getVisitTotal(v);
   const pm = PAYMENT_META[v.paymentMethod] || {};
+  const cancelled = isCancelled(v);
+  const note = (v.freeNote || "").trim();
   return (
-    '<div class="row-card">' +
+    '<div class="row-card"' + (cancelled ? ' style="opacity:.72;"' : "") + '>' +
       '<div style="min-width:0;">' +
-        '<div class="flex items-center gap-2"><span style="font-weight:800;font-size:13px;">' + esc(cust ? cust.name : "مشتری حذف‌شده") + (cust && cust.code ? ' <span class="small muted">(' + esc(cust.code) + ')</span>' : "") + '</span><span class="small muted">#' + formatFaNum(v.invoiceNumber) + "</span></div>" +
-        '<div class="flex items-center gap-2 small muted" style="margin-top:2px;"><span>' + formatFaDate(v.date) + '</span><span class="badge" style="color:' + pm.color + ";background:" + pm.bg + ';">' + esc(v.paymentMethod) + "</span></div>" +
+        '<div class="flex items-center gap-2"><span style="font-weight:800;font-size:13px;' + (cancelled ? 'text-decoration:line-through;' : '') + '">' + esc(cust ? cust.name : "مشتری حذف‌شده") + (cust && cust.code ? ' <span class="small muted">(' + esc(cust.code) + ')</span>' : "") + '</span><span class="small muted">#' + formatFaNum(v.invoiceNumber) + "</span></div>" +
+        '<div class="flex items-center gap-2 small muted" style="margin-top:2px;"><span>' + formatFaDate(v.date) + '</span>' +
+          (cancelled ? '<span class="badge" style="color:#7A4A20;background:#F6E7D8;">لغو شده</span>' : '<span class="badge" style="color:' + pm.color + ";background:" + pm.bg + ';">' + esc(v.paymentMethod) + "</span>") +
+        "</div>" +
+        (note ? '<div class="small muted" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px;">' + icon("note", 12) + " " + esc(note) + "</div>" : "") +
       "</div>" +
       '<div class="flex items-center gap-1" style="flex-wrap:wrap;justify-content:flex-end;max-width:55%;">' +
-        '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;"><span class="serif" style="font-weight:800;font-size:13px;color:var(--green);">' + formatToman(total) + "</span>" +
-        '<span class="payment-status-chip" style="'+(isInvoiceOverdue(v)?'background:#FBE9E7;color:#A33B32;':'')+'">'+(invoiceIsPaymentTracked(v)?formatToman(getInvoiceBalance(v))+' · ':'')+esc(getInvoicePaymentLabel(v))+'</span></span>' +
+        '<span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;"><span class="serif" style="font-weight:800;font-size:13px;' + (cancelled ? 'color:var(--v1-muted);text-decoration:line-through;' : 'color:var(--green);') + '">' + formatToman(total) + "</span>" +
+        (cancelled ? '<span class="payment-status-chip" style="background:#F1EDE4;color:#7A6A55;">از جمع‌ها کنار گذاشته شد</span>' :
+        '<span class="payment-status-chip" style="'+(isInvoiceOverdue(v)?'background:#FBE9E7;color:#A33B32;':'')+'">'+(invoiceIsPaymentTracked(v)?formatToman(getInvoiceBalance(v))+' · ':'')+esc(getInvoicePaymentLabel(v))+'</span>') +
+        "</span>" +
         '<button class="btn-icon icon-btn" data-action="view-invoice" data-id="' + v.id + '">' + icon("receipt", 14) + "</button>" +
         '<button class="btn-icon icon-btn" data-action="edit-invoice" data-id="' + v.id + '">' + icon("pencil", 14) + "</button>" +
+        '<button class="btn-icon icon-btn" style="color:' + (cancelled ? "var(--green)" : "var(--amber)") + ';" data-action="toggle-invoice-cancel" data-id="' + v.id + '" title="' + (cancelled ? "بازگرداندن فاکتور" : "لغو فاکتور") + '">' + icon(cancelled ? "check" : "x", 14) + "</button>" +
         '<button class="btn-icon icon-btn" style="color:var(--brick);" data-action="delete-visit" data-id="' + v.id + '">' + icon("trash", 14) + "</button>" +
       "</div>" +
     "</div>"
@@ -2711,8 +3046,8 @@ function renderModal() {
   const m = state.modal;
   if (m.type === "customer") return renderCustomerModal(m);
   if (m.type === "product") return renderProductModal(m);
-  if (m.type === "visit-intake") return renderVisitIntakeModal(m);
   if (m.type === "visit") return renderVisitModal(m);
+  if (m.type === "visitOnly") return renderVisitOnlyModal(m);
   if (m.type === "invoiceView") return renderInvoiceModal(m);
   if (m.type === "quick-invoice") return renderQuickInvoiceModal();
   if (m.type === "company-sales") return renderCompanySalesModal(m.period);
@@ -2929,11 +3264,16 @@ function renderCustomerModal(m) {
         field("شهر", '<input class="input" data-field="city" value="' + esc(f.city || "") + '" placeholder="مثلاً لامرد" />') +
         field("شماره تماس", '<input class="input" data-field="phone" value="' + esc(f.phone) + '" />') +
         '<div class="grid-2">' +
+          field("نام مسئول خرید", '<input class="input" data-field="buyerName" value="' + esc(f.buyerName || "") + '" placeholder="اختیاری" />') +
+          field("تلفن مسئول خرید", '<input class="input" data-field="buyerPhone" value="' + esc(f.buyerPhone || "") + '" placeholder="اختیاری" />') +
+        "</div>" +
+        '<div class="grid-2">' +
           field("بازه ویزیت (روز)", '<input type="number" min="1" class="input" data-field="visitFrequency" value="' + esc(f.visitFrequency) + '" />') +
           field("میانگین خرید (تومان)", '<input type="number" min="0" class="input" data-field="avgOrderValue" value="' + esc(f.avgOrderValue) + '" />') +
         "</div>" +
         field("مساحت مغازه (متر مربع، اختیاری)", '<input type="number" min="0" class="input" data-field="area" value="' + esc(f.area || "") + '" />') +
         field("آخرین ویزیت", '<input type="date" class="input" data-field="lastVisitDate" value="' + esc(f.lastVisitDate) + '" />') +
+        field("ویزیت بعدی (اختیاری)", '<input type="date" class="input" data-field="nextVisitDate" value="' + esc(f.nextVisitDate || "") + '" />') +
         field("موقعیت مکانی (GPS)",
           '<div class="flex items-center gap-2">' +
             '<button type="button" class="btn btn-soft-amber btn-sm" data-action="capture-customer-gps">' + (m.gps.loading ? icon("loader", 13) + "در حال دریافت..." : icon("nav", 13) + "دریافت موقعیت فعلی") + "</button>" +
@@ -2978,86 +3318,28 @@ function renderProductModal(m) {
   );
 }
 
-function renderVisitIntakeModal(m) {
-  const f = m.form || {};
-  const cust = state.customers.find(c => c.id === f.customerId);
-  const choice = (name, value, label) => '<label class="chip '+(f[name]===value?'active':'')+'" style="display:inline-flex;align-items:center;gap:5px;margin:3px 4px 3px 0;cursor:pointer;"><input type="radio" name="'+name+'" value="'+value+'" data-field="'+name+'" '+(f[name]===value?'checked':'')+' style="accent-color:var(--amber-dark);margin:0;" />'+label+'</label>';
-  return '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">'+
-    '<div class="modal-head" style="padding:14px 18px 10px;margin:0;border-bottom:1px solid var(--v1-line);">'+
-      '<div><div class="v1-page-title" style="font-size:17px;">ثبت ویزیت</div><div class="v1-page-sub">نتیجه ملاقات را ثبت کن؛ در صورت خرید، بعداً فاکتور صادر می‌شود</div></div>'+
-      '<button data-action="close-modal">'+icon("x",20)+'</button>'+
-    '</div><div style="padding:14px 18px 22px;">'+
-      '<div class="v1-list-card" style="padding:11px 12px;margin-bottom:12px;">'+
-        '<div class="v1-section-label">مشتری</div><div style="font-weight:900;font-size:14px;margin-top:5px;">'+esc(cust?cust.name:"—")+'</div>'+
-        (cust&&cust.phone?'<div class="small muted" style="margin-top:3px;">تلفن فروشگاه: '+esc(cust.phone)+'</div>':'')+
-      '</div>'+
-      '<div class="v1-section-label" style="margin-bottom:7px;">مسئول خرید</div>'+
-      '<div class="grid-2">'+
-        field("نام مسئول خرید",'<input class="input" data-field="purchasingManagerName" value="'+esc(f.purchasingManagerName||"")+'" placeholder="نام و نام خانوادگی" />')+
-        field("شماره تماس مسئول خرید",'<input class="input" type="tel" data-field="purchasingManagerPhone" value="'+esc(f.purchasingManagerPhone||"")+'" placeholder="شماره موبایل" />')+
-      '</div>'+
-      '<div class="field" style="margin-top:9px;"><span class="field-label">وضعیت حضور مسئول خرید</span><div style="display:flex;flex-wrap:wrap;">'+
-        choice("buyerAvailability","present","حاضر بود")+choice("buyerAvailability","afternoon","عصرها می‌آید")+choice("buyerAvailability","specific_days","روزهای مشخص")+choice("buyerAvailability","call_first","قبلش تماس بگیر")+choice("buyerAvailability","unknown","اطلاع ندارم")+
-      '</div></div>'+
-      '<div class="field" style="margin-top:10px;"><span class="field-label">نتیجه ویزیت</span><div style="display:flex;flex-wrap:wrap;">'+
-        choice("visitOutcome","purchased","خرید انجام شد")+choice("visitOutcome","not_purchased","خرید انجام نشد")+choice("visitOutcome","decision_pending","تصمیم‌گیری به بعد موکول شد")+
-      '</div></div>'+
-      (f.visitOutcome==="not_purchased"||f.visitOutcome==="decision_pending" ?
-        '<div class="field" style="margin-top:10px;"><span class="field-label">دلیل اصلی عدم خرید / تعویق</span><div style="display:flex;flex-wrap:wrap;">'+
-          choice("noPurchaseReason","stock","موجودی کافی داشت")+choice("noPurchaseReason","competitor_price","قیمت رقیب پایین‌تر بود")+choice("noPurchaseReason","cashflow","مشکل نقدینگی داشت")+choice("noPurchaseReason","buyer_absent","مسئول خرید حضور نداشت")+choice("noPurchaseReason","not_needed","فعلاً نیاز نداشت")+choice("noPurchaseReason","other","سایر / نامشخص")+
-        '</div></div>'+
-        '<div class="field" style="margin-top:10px;"><span class="field-label">زمان مراجعه بعدی</span><div style="display:flex;flex-wrap:wrap;">'+
-          choice("followUpChoice","tomorrow","فردا")+choice("followUpChoice","2_3_days","۲ تا ۳ روز دیگر")+choice("followUpChoice","next_week","هفته آینده")+choice("followUpChoice","2_weeks","دو هفته دیگر")+choice("followUpChoice","call","پس از تماس تلفنی")+choice("followUpChoice","unknown","زمان مشخص نیست")+
-        '</div></div>' : '')+
-      '<div style="margin-top:10px;">'+field("یادداشت و نکات مهم ملاقات",'<textarea class="textarea" rows="2" data-field="visitNote" placeholder="نیاز مشتری، وضعیت رقبا یا نکته مهم...">'+esc(f.visitNote||"")+'</textarea>')+'</div>'+
-      '<div class="v1-action-bar" style="margin-top:14px;display:flex;flex-wrap:wrap;">'+
-        '<button class="btn btn-outline" data-action="close-modal">انصراف</button>'+
-        (f.visitOutcome==="purchased" ? '<button class="btn btn-primary" data-action="visit-create-invoice">ادامه و صدور فاکتور</button>' : '<button class="btn btn-primary" data-action="visit-save-no-purchase">ثبت نتیجه ویزیت</button>')+
-      '</div>'+
-    '</div></div></div>';
+function visitTotalsHtml(f) {
+  const subtotal = (f.items || []).reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+  const discountPercent = Math.max(0, Math.min(100, Number(f.discountPercent) || 0));
+  const discountAmount = Math.round(subtotal * discountPercent / 100);
+  const total = Math.round(subtotal * (100 - discountPercent) / 100);
+  return '<div class="flex items-center" style="justify-content:space-between;"><span class="small muted">جمع اقلام</span><span class="small" style="font-weight:800;">'+formatToman(subtotal)+'</span></div>' +
+    (discountAmount > 0 ? '<div class="flex items-center" style="justify-content:space-between;margin-top:4px;"><span class="small muted">تخفیف '+formatFaNum(discountPercent)+'٪</span><span class="small" style="font-weight:800;color:var(--brick);">−'+formatToman(discountAmount)+'</span></div>' : '') +
+    '<div class="flex items-center" style="justify-content:space-between;margin-top:6px;border-top:1px solid var(--v1-line);padding-top:6px;"><span class="small" style="font-weight:900;">مبلغ نهایی</span><span class="serif" style="font-weight:900;font-size:15px;">'+formatToman(total)+'</span></div>';
 }
-
-async function saveNoPurchaseVisit() {
-  const m = state.modal;
-  if (!m || m.type !== "visit-intake") return;
-  const f = m.form || {};
-  if (!f.customerId) return;
-  if (!f.visitOutcome) { showToast("ابتدا نتیجه ویزیت را انتخاب کن"); return; }
-  if (f.visitOutcome === "purchased") { showToast("برای ثبت خرید، گزینه ادامه و صدور فاکتور را انتخاب کن"); return; }
-  const questionAnswers = [
-    ["نتیجه ویزیت", f.visitOutcome === "not_purchased" ? "خرید انجام نشد" : "تصمیم‌گیری به بعد موکول شد"],
-    ["دلیل عدم خرید", f.noPurchaseReason || "ثبت نشده"],
-    ["وضعیت حضور مسئول خرید", f.buyerAvailability || "ثبت نشده"],
-    ["زمان مراجعه بعدی", f.followUpChoice || "ثبت نشده"],
-    ["نام مسئول خرید", f.purchasingManagerName || "ثبت نشده"],
-    ["شماره مسئول خرید", f.purchasingManagerPhone || "ثبت نشده"]
-  ].map(([question,answer]) => ({question,answer}));
-  const days = ({tomorrow:1,"2_3_days":3,next_week:7,"2_weeks":14})[f.followUpChoice] || null;
-  const entry = {
-    id:uid(), date:todayISO(), customerId:f.customerId, lat:f.lat||"", lng:f.lng||"",
-    items:[], paymentMethod:"", companyId:f.companyId||"", answers:questionAnswers,
-    freeNote:f.visitNote||"", visitOutcome:f.visitOutcome, noPurchaseReason:f.noPurchaseReason||"",
-    buyerAvailability:f.buyerAvailability||"", purchasingManagerName:f.purchasingManagerName||"",
-    purchasingManagerPhone:f.purchasingManagerPhone||"", followUpChoice:f.followUpChoice||"",
-    followUpDate:days ? addDaysISO(todayISO(),days) : "", invoiceNumber:null, paymentTracking:false, payments:[]
-  };
-  state.visits = state.visits.concat([entry]);
-  state.customers = state.customers.map(c => c.id===f.customerId ? Object.assign({},c,{
-    lastVisitDate:entry.date,
-    purchasingManagerName:f.purchasingManagerName||c.purchasingManagerName||"",
-    purchasingManagerPhone:f.purchasingManagerPhone||c.purchasingManagerPhone||"",
-    nextVisitDate:entry.followUpDate||""
-  }) : c);
-  await saveVisits();
-  await saveCustomers();
-  closeModal();
-  showToast("نتیجه ویزیت و اطلاعات پیگیری ذخیره شد");
+function refreshVisitTotals() {
+  const box = document.getElementById("visit-total-summary");
+  if (!box || !state.modal || !state.modal.form) return;
+  box.innerHTML = visitTotalsHtml(state.modal.form);
 }
 
 function renderVisitModal(m) {
   const f = m.form;
   const cust = state.customers.find((c) => c.id === f.customerId);
-  const total = f.items.reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+  const subtotal = f.items.reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+  const discountPercent = Math.max(0, Math.min(100, Number(f.discountPercent) || 0));
+  const discountAmount = Math.round(subtotal * discountPercent / 100);
+  const total = Math.round(subtotal * (100 - discountPercent) / 100);
   const companyOptions = '<option value="">انتخاب شرکت فروشنده...</option>' + state.companies.map(c => '<option value="'+c.id+'"'+(String(f.companyId||"")===String(c.id)?' selected':'')+'>'+esc(c.name)+'</option>').join('');
   return (
     '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">' +
@@ -3098,11 +3380,13 @@ function renderVisitModal(m) {
         '</div>' +
         '<div class="grid-2" style="margin-top:10px;">' +
           field("روش پرداخت", select("paymentMethod", PAYMENT_METHODS, f.paymentMethod)) +
-          '<div class="field"><span class="field-label">جمع فاکتور</span><div class="v1-total"><span class="serif">'+formatToman(total)+'</span></div></div>' +
+          field("تخفیف (٪)", '<input class="input" type="number" min="0" max="100" inputmode="numeric" data-field="discountPercent" value="'+esc(discountPercent || "")+'" placeholder="۰" />') +
         '</div>' +
+        '<div class="v1-list-card" id="visit-total-summary" style="margin-top:9px;padding:10px 12px;">' + visitTotalsHtml(f) + '</div>' +
         '<div style="margin-top:9px;">' + field("مهلت تسویه (روز)", '<input class="input" type="number" min="0" max="3650" data-field="paymentTermsDays" value="'+esc(f.paymentTermsDays == null ? 7 : f.paymentTermsDays)+'" />') +
         '<div class="small muted" style="margin-top:3px;line-height:1.7;">برای نقد و انتقال، فاکتور هنگام ثبت تسویه می‌شود. برای نسیه، مهلت را تعیین کن؛ چک تا زمان ثبت وصول، پرداخت قطعی محسوب نمی‌شود.</div></div>' +
         '<div style="margin-top:11px;">' + field("یادداشت",'<textarea class="textarea" rows="2" data-field="freeNote">'+esc(f.freeNote)+'</textarea>') + '</div>' +
+        '<div style="margin-top:9px;">' + field("ویزیت بعدی (اختیاری)", '<input type="date" class="input" data-field="nextVisitDate" value="'+esc(f.nextVisitDate || "")+'" />') + '</div>' +
         '<div class="v1-action-bar" style="margin-top:13px;">' +
           '<button class="btn btn-outline" data-action="close-modal">انصراف</button>' +
           '<button class="btn btn-primary" data-action="submit-visit">'+(m.editingVisitId?'ذخیره فاکتور':'ثبت فاکتور')+'</button>' +
@@ -3116,6 +3400,9 @@ function renderInvoiceModal(m) {
   const v = m.visit;
   const cust = state.customers.find((c) => c.id === v.customerId);
   const total = getVisitTotal(v);
+  const subtotal = getVisitSubtotal(v);
+  const discountPercent = getVisitDiscountPercent(v);
+  const discountAmount = getVisitDiscountAmount(v);
   return (
     '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">' +
       '<div class="modal-head" style="padding:16px 18px;border-bottom:1px solid var(--line);margin:0;flex-wrap:wrap;gap:8px;">' +
@@ -3142,7 +3429,9 @@ function renderInvoiceModal(m) {
           v.items.map((it) => "<tr><td>" + esc(it.name) + "</td><td>" + formatFaNum(it.qty) + "</td><td>" + formatToman(it.unitPrice) + "</td><td style=\"font-weight:800;\">" + formatToman(it.qty * it.unitPrice) + "</td></tr>").join("") +
         "</tbody></table>" +
         (v.freeNote ? '<div class="small muted" style="margin-top:10px;">یادداشت: ' + esc(v.freeNote) + "</div>" : "") +
-        '<div class="inv-total serif"><span>جمع کل</span><span>' + formatToman(total) + "</span></div>" +
+        (discountAmount > 0 ? '<div class="flex items-center" style="justify-content:space-between;margin-top:10px;"><span class="small muted">جمع اقلام</span><span class="small" style="font-weight:800;">' + formatToman(subtotal) + "</span></div>" +
+          '<div class="flex items-center" style="justify-content:space-between;margin-top:4px;"><span class="small muted">تخفیف ' + formatFaNum(discountPercent) + '٪</span><span class="small" style="font-weight:800;color:var(--brick);">−' + formatToman(discountAmount) + "</span></div>" : "") +
+        '<div class="inv-total serif"><span>مبلغ نهایی</span><span>' + formatToman(total) + "</span></div>" +
         '<div style="margin-top:12px;padding:11px;border:1px solid var(--v1-line);border-radius:12px;background:#fff;">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><strong style="font-size:12px;">وضعیت پرداخت</strong><span class="payment-status-chip">'+esc(getInvoicePaymentLabel(v))+'</span></div>' +
           (invoiceIsPaymentTracked(v) ? '<div class="small muted" style="margin-top:6px;">پرداخت‌شده: '+formatToman(getInvoicePaid(v))+' · مانده: '+formatToman(getInvoiceBalance(v))+' · سررسید: '+formatFaDate(getInvoiceDueDate(v))+'</div>' : '<div class="small muted" style="margin-top:6px;">این فاکتور از نسخهٔ قبلی آمده یا وضعیت پرداخت آن ثبت نشده است؛ برای جلوگیری از محاسبهٔ اشتباه بدهی، هنوز در جمع مطالبات لحاظ نشده.</div>') +
@@ -3289,9 +3578,9 @@ function select(fieldName, options, value) {
 loadAll();
 
 // Flush the latest wizard draft when the page is backgrounded or closed.
-window.addEventListener("pagehide", () => { persistWizardStateNow(); });
+window.addEventListener("pagehide", () => { persistWizardStateNow(); flushProductPriceSave(); });
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") persistWizardStateNow();
+  if (document.visibilityState === "hidden") { persistWizardStateNow(); flushProductPriceSave(); }
 });
 
 // wizard delegated inputs
