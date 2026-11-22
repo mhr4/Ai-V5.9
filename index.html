@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.18.2" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.21" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -239,12 +239,24 @@ table.inv-table th:nth-child(4),table.inv-table td:nth-child(4){text-align:left;
 .location-sheet{max-height:90vh;}
 .location-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0 11px;border-bottom:1px solid var(--v1-line);}
 .location-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
-.location-row{background:#fff;border:1px solid var(--v1-line);border-radius:14px;padding:11px;display:grid;grid-template-columns:1fr auto;gap:4px 9px;align-items:center;}
-.location-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.location-main strong{font-size:13px;}
-.location-main span{font-size:10px;color:var(--v1-primary);font-weight:700;}
-.location-last{font-size:10px;color:var(--v1-muted);grid-column:1 / 2;}
- .location-row>.btn{grid-column:2;grid-row:1 / span 2;}
+/* V5.20.2 — nearby stores cards */
+.location-card{background:#fff;border:1px solid var(--v1-line);border-radius:14px;padding:11px 12px;display:flex;flex-direction:column;gap:7px;}
+.location-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.location-card-title{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.location-card-title strong{font-size:13.5px;line-height:1.45;}
+.location-distance{font-size:10px;color:var(--v1-primary);font-weight:800;}
+.location-nav-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--v1-line);border-radius:10px;background:#fff;color:var(--v1-primary);text-decoration:none;}
+.location-buyer{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--ink-soft);}
+.location-buyer b{font-weight:800;color:var(--ink);}
+.location-call{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;border:1px solid var(--v1-line);background:#fff;color:var(--v1-primary);text-decoration:none;}
+.location-chips{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.location-note{background:#FBF5E7;border:1px solid #F0E4C8;border-radius:10px;padding:7px 9px;font-size:10.5px;line-height:1.75;color:#6B5B33;display:flex;align-items:flex-start;gap:5px;}
+.location-note svg{flex:0 0 auto;margin-top:3px;opacity:.75;}
+.location-note span{flex:1 1 auto;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.location-card .btn-block{margin-top:1px;}
+.location-filter-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--v1-line);background:#fff;color:var(--ink-soft);border-radius:999px;padding:6px 11px;font-size:10.5px;font-weight:800;font-family:inherit;cursor:pointer;}
+.location-filter-btn.active{background:var(--v1-primary);border-color:var(--v1-primary);color:#fff;}
+.location-toolbar-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
 .plan-stop-actions{display:flex;align-items:center;gap:5px;grid-column:3;grid-row:1 / span 2;}
 .plan-stop-map{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--v1-line);border-radius:10px;background:#fff;color:var(--v1-primary);text-decoration:none;}
 .dashboard-v5-suggestion-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto;}
@@ -456,7 +468,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 @media(max-width:520px){.company-sales-row{grid-template-columns:minmax(0,1fr) auto;}.company-sales-row .company-sales-total-cell{grid-column:1/-1;display:none;}}
 
 
-/* V5.18.2 — keep the complete dashboard inside one continuous safe-margin frame */
+/* V5.21 — keep the complete dashboard inside one continuous safe-margin frame */
 .section.dashboard-v5{
   margin:10px 10px 18px;
   padding:14px 12px 24px !important;
@@ -466,6 +478,36 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 }
 
 .strike{text-decoration:line-through;text-decoration-thickness:1.5px;}
+
+/* V5.21 — Dashboard polish: tighter spacing, touch targets >= 44px */
+.section.dashboard-v5{margin:6px 8px 12px !important;padding:10px 10px 14px !important;}
+.dashboard-v5{gap:8px !important;}
+.dashboard-v5-stats{gap:6px !important;}
+.dashboard-v5-stats .stat-card{padding:8px 10px !important;min-height:54px !important;}
+.dashboard-v5-primary{min-height:48px;padding:10px 12px !important;}
+.dashboard-v5-quick{gap:6px !important;}
+.dashboard-v5-quick-card{min-height:48px !important;padding:7px 10px !important;}
+.dashboard-v5-smart{min-height:44px;}
+.dashboard-v5-quick-action{min-height:32px;display:inline-flex;align-items:center;}
+.dashboard-v5-map-btn{width:44px;height:44px;}
+.dashboard-v5-suggestion-actions .btn,.dashboard-v5-suggestion .btn{min-height:44px;}
+.dashboard-v5-activity-row{padding:8px 12px;min-height:44px;}
+.dashboard-v5-product-row{padding:8px 12px;}
+.dashboard-v5-last{padding:9px 12px;min-height:44px;}
+.dashboard-v5-list{gap:6px;}
+.dashboard-v5-section-title{margin:0 2px 5px !important;}
+@media(max-width:420px){.section.dashboard-v5{margin:4px 6px 10px !important;padding:9px 8px 12px !important;}}
+
+/* V5.21 — Visit tab CRM list */
+.visit-chips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;}
+.visit-chip{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-size:12px;font-weight:800;border-radius:999px;background:var(--card);color:var(--ink-soft);border:1px solid var(--line);white-space:nowrap;flex:0 0 auto;}
+.visit-chip.active{background:var(--v1-primary,#111927);color:#fff;border-color:transparent;}
+.visit-crm-card{background:#fff;border:1px solid var(--v1-line);border-radius:14px;overflow:hidden;}
+.visit-crm-main{display:block;width:100%;text-align:right;padding:11px 12px 8px;background:none;border:0;font-family:inherit;color:inherit;}
+.visit-crm-actions{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--v1-line);}
+.visit-crm-btn{min-height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-inline-start:1px solid var(--v1-line);color:var(--v1-primary,#111927);text-decoration:none;font-family:inherit;}
+.visit-crm-btn:first-child{border-inline-start:0;}
+.visit-crm-btn.disabled{opacity:.3;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -664,6 +706,41 @@ function formatFaDate(iso) {
   catch { return iso; }
 }
 function formatFaNum(n) { return (n || 0).toLocaleString("fa-IR"); }
+/* ---------- V5.20: buyer availability time (V5.20.2: buyer-time priority) ---------- */
+function formatFaTime(hhmm) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm == null ? "" : hhmm).trim());
+  if (!m) return "";
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  const mi = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return String(h).padStart(2, "0") + ":" + String(mi).padStart(2, "0");
+}
+function faClock(hhmm) {
+  return formatFaTime(hhmm).replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+}
+function quickBuyerTime(mode) {
+  if (mode === "evening") return "17:00";
+  const addMin = mode === "2h" ? 120 : 60;
+  const t = new Date(Date.now() + addMin * 60000);
+  return String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+}
+function buyerTimeInfo(customerId) {
+  const v = latestBuyerAvailability(customerId);
+  if (!v) return null;
+  const t = formatFaTime(v.nextVisitTime);
+  if (!t) return null;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const buyerMin = parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3, 5), 10);
+  const diff = buyerMin - nowMin;
+  const isToday = v.date === todayISO();
+  return { time: t, diff, isToday, soon: isToday && diff <= 120 && diff >= -90 };
+}
+function latestBuyerAvailability(customerId) {
+  const list = state.visits.filter((v) => v.customerId === customerId && v.nextVisitTime && !isCancelled(v));
+  if (!list.length) return null;
+  list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  return list[0];
+}
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -708,7 +785,7 @@ function addDaysISO(iso, days) {
 }
 function invoiceIsPaymentTracked(v) { return !!(v && v.paymentTracking === true); }
 
-/* ---------- V5.17: visit answers + product price sync (V5.18: discount, V5.18.2 fixes) ---------- */
+/* ---------- V5.17: visit answers + product price sync (V5.18: discount, V5.20: buyer time) ---------- */
 function buildAnswersArray(obj) {
   if (!obj || typeof obj !== "object") return [];
   return Object.keys(obj)
@@ -903,10 +980,12 @@ const state = {
   modal: null,
   confirm: null,
   gps: { status: "idle", error: "", matches: [], coords: null, updatedAt: null }, // status: idle|loading|matched|nomatch|error
+  locationDueOnly: false, // V5.20.2 — «فقط موعددارها» filter in nearby-stores modal
   theme: localStorage.getItem("salesai-theme") || "navy",
   customerSearch: "",
   visitCustomerSearch: "",
   customerFilter: "all",
+  visitFilter: "all", // V5.21 — فیلتر لیست تب ویزیت (فقط در حافظه، بدون تغییر IndexedDB)
   invoiceSearch: "",
   productSearch: "",
   productSort: "name",
@@ -1071,8 +1150,8 @@ async function saveCompanies() { await DB.set("companies", state.companies); }
 async function saveAi() { await DB.set("aiAnalysis", { result: state.aiResult, at: state.aiAt }); }
 async function saveVendorProfile() { await DB.set("vendorProfile", state.vendorProfile); }
 
-const APP_VERSION = "v5.18.2";
-const BACKUP_COMPATIBLE_WITH = ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10", "v5.16", "v5.17", "v5.18", "v5.18.1", "v5.18.2"];
+const APP_VERSION = "v5.20.4";
+const BACKUP_COMPATIBLE_WITH = ["vc4", "vc4.5", "v5", "v5.7", "v5.8", "v5.9", "v5.10", "v5.16", "v5.17", "v5.18", "v5.18.1", "v5.18.2", "v5.19", "v5.20", "v5.20.1", "v5.20.2", "v5.20.3", "v5.20.4"];
 function exportAllData() {
   const payload = {
     app: "Sales AI",
@@ -1220,7 +1299,9 @@ function dailyPlanCandidates(coords) {
     const lastNote = (lastOrder && lastOrder.freeNote ? String(lastOrder.freeNote).trim() : "") || (Array.isArray(visits) && visits[0] && visits[0].freeNote ? String(visits[0].freeNote).trim() : "");
     const nextVisitDate = c.nextVisitDate || "";
     const lastVisit = visits[0] || null;
-    return { customer:c, status, distance, urgency, priority, value, proximity, orderDays, lastNote, nextVisitDate, lastVisit };
+    const buyer = buyerTimeInfo(c.id);
+    const buyerBoost = buyer && buyer.soon ? (buyer.diff >= 0 ? 260 : 200) : 0;
+    return { customer:c, status, distance, urgency, priority, value, proximity, orderDays, lastNote, nextVisitDate, lastVisit, buyer, buyerBoost };
   }).filter(Boolean);
 }
 function routeOrder(items, coords) {
@@ -1253,9 +1334,13 @@ function buildDailyPackages(coords) {
     const sb = b.urgency*0.40 + b.priority*0.25 + b.value*0.20 + b.proximity*0.15;
     return sb-sa;
   }).slice(0,5);
-  const buyers = candidates.filter(x => x.orderDays < 999)
-    .sort((a,b) => b.orderDays - a.orderDays || b.value - a.value)
+  const buyers = candidates.filter(x => x.orderDays < 999 || x.buyerBoost > 0)
+    .sort((a,b) => (b.buyerBoost - a.buyerBoost) || (b.orderDays - a.orderDays) || (b.value - a.value))
     .slice(0,5);
+  const buyersRouted = routeOrder(buyers, coords);
+  const buyersFinal = buyersRouted.filter(x => x.buyerBoost > 0)
+    .sort((a,b) => b.buyerBoost - a.buyerBoost)
+    .concat(buyersRouted.filter(x => !(x.buyerBoost > 0)));
   const notes = candidates.filter(x => {
     if (x.lastNote) return true;
     if (!x.nextVisitDate) return false;
@@ -1266,7 +1351,7 @@ function buildDailyPackages(coords) {
     if (d) return d;
     return b.urgency - a.urgency;
   }).slice(0,5);
-  return { buyers: routeOrder(buyers, coords), near: routeOrder(nearPool, coords), notes: routeOrder(notes, coords), sales: routeOrder(sales, coords) };
+  return { buyers: buyersFinal, near: routeOrder(nearPool, coords), notes: routeOrder(notes, coords), sales: routeOrder(sales, coords) };
 }
 function googleMapsDirectionsUrl(customer, coords) {
   if (!customer || customer.lat === "" || customer.lat == null || customer.lng === "" || customer.lng == null) return "";
@@ -1288,7 +1373,7 @@ function renderPlanStop(x, i) {
   const due=s.key === "critical" ? "خیلی عقب‌افتاده" : s.key === "due" ? "موعد ویزیت" : s.key === "soon" ? "نزدیک موعد" : s.key === "never" ? "بدون ویزیت" : "طبق برنامه";
   const mapUrl=googleMapsDirectionsUrl(c, state.gps.coords);
   const mapBtn=mapUrl ? '<a class="plan-stop-map" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",15)+'</a>' : '';
-  const noteLine = x.lastNote ? '<small style="color:var(--v1-muted);display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+icon("pencil",11)+' '+esc(x.lastNote)+'</small>' : '';
+  const noteLine = lastVisitSummaryHtml(c.id);
   const nextLine = x.nextVisitDate ? '<small style="color:var(--amber);display:block;margin-top:2px;">ویزیت بعدی: '+formatFaDate(x.nextVisitDate)+'</small>' : '';
   return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+noteLine+nextLine+'</span><span class="plan-stop-actions">'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
 }
@@ -1306,7 +1391,7 @@ function renderDailyPlanModal() {
     '<div class="plan-toolbar"><span class="small muted">'+gpsText+'</span><span class="flex gap-2"><button class="btn btn-outline btn-sm" data-action="detect-location" title="به‌روزرسانی موقعیت">'+icon("nav",14)+' موقعیت</button><button class="btn btn-outline btn-sm" data-action="refresh-daily-plan">'+icon("refresh",14)+' رفرش</button></span></div>'+
     (g.status === "error" ? '<div class="plan-intro" style="color:var(--brick)">'+esc(g.error)+'</div>' : '')+
     '<div class="plan-intro">اپ فقط «نزدیک‌ترین مغازه» را انتخاب نمی‌کند؛ موعد ویزیت، اولویت مشتری، ارزش خرید و یادداشت ویزیت قبلی را هم در نظر می‌گیرد. هر بسته یک زاویهٔ متفاوت دارد تا خودت انتخاب کنی.</div>'+
-    renderPlanPackage("بسته ۱ · خریداران قبلی","مغازه‌هایی که قبلاً خرید کرده‌اند و بیشترین فاصله از آخرین خرید را دارند","receipt",packages.buyers)+
+    renderPlanPackage("بسته ۱ · خریداران قبلی" + (packages.buyers.some(x => x.buyerBoost > 0) ? " · زمان خریدار" : ""),"مغازه‌هایی که قبلاً خرید کرده‌اند؛ مغازه‌هایی که الان مسئول خریدشان در مغازه است، بالای لیست قرار می‌گیرند","receipt",packages.buyers)+
     renderPlanPackage("بسته ۲ · نزدیک‌ترین مسیر","تمرکز بیشتر روی مشتریان موعددار، با مسیر کوتاه‌تر","nav",packages.near)+
     renderPlanPackage("بسته ۳ · یادداشت و ویزیت بعدی","مغازه‌هایی که یادداشت پیگیری دارند یا موعد ویزیتشان نزدیک است","pencil",packages.notes)+
     '<div class="small muted" style="margin-top:10px;line-height:1.7;">این سه بسته «پیشنهاد» هستند؛ قبل از شروع مسیر می‌توانی هر مشتری را جداگانه انتخاب کنی.</div>'+
@@ -2303,6 +2388,7 @@ function handleAction(action, id, el) {
   if (action === "open-daily-plan") { openDailyPlan(); return; }
   if (action === "refresh-daily-plan") { detectLocation(); return; }
   if (action === "refresh-location") { detectLocation(); return; }
+  if (action === "toggle-location-due") { state.locationDueOnly = !state.locationDueOnly; render(); return; }
   if (action === "set-theme") { setTheme(id); return; }
   if (action === "open-new-invoice") { setModal({ type: "quick-invoice", form: { customerId: "", companyId: "" } }); return; }
   if (action === "open-company-sales") { setModal({ type: "company-sales", period: id === "today" ? "today" : "month" }); return; }
@@ -2350,11 +2436,18 @@ function handleAction(action, id, el) {
     return;
   }
   if (action === "visit-pick-customer") { openVisitScreenFor(id); return; }
+  if (action === "visit-set-filter") { state.visitFilter = id || "all"; render(); return; }
+  if (action === "visit-open-detail") { state.tab = "customers"; state.customerDetailId = id; render(); return; }
   if (action === "visit-change-customer") { visitScreenState().customerId = ""; render(); return; }
   if (action === "visit-start-invoice") { openStartVisit(id, null); return; }
   if (action === "visit-no-purchase") { openVisitOnly(id); return; }
   if (action === "visit-only-choice") {
     if (state.modal && state.modal.form) state.modal.form[el.dataset.q] = el.dataset.val;
+    render();
+    return;
+  }
+  if (action === "visit-only-time") {
+    if (state.modal && state.modal.form) state.modal.form.nextVisitTime = quickBuyerTime(el.dataset.mode);
     render();
     return;
   }
@@ -2370,6 +2463,7 @@ function handleAction(action, id, el) {
     }
     return;
   }
+  if (action === "render-recover") { state.customerDetailId = null; state.modal = null; state.confirm = null; render(); return; }
   if (action === "open-customer-detail") { state.customerDetailId = id; render(); return; }
   if (action === "back-to-customers") { state.customerDetailId = null; render(); return; }
   if (action === "start-visit-manual") {
@@ -2451,6 +2545,29 @@ const TABS = [
 ];
 
 function render() {
+  try {
+    renderUnsafe();
+  } catch (err) {
+    // V5.21 — شبکهٔ ایمنی رندر: یک خطای زمان اجرا نباید کل رابط را سفید/بی‌اثر کند
+    console.error("render failed:", err);
+    renderCrashScreen(err);
+  }
+}
+
+function renderCrashScreen(err) {
+  const msg = (err && (err.message || String(err))) || "خطای نامشخص";
+  app.innerHTML =
+    '<header class="app-header"><div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.21</span></div>' +
+    '<div class="brand-sub">خطای نمایش</div></div></header>' +
+    '<main><div class="v1-list-card" style="border-color:#E7B7B0;background:#FDF3F2;">' +
+    '<div style="font-weight:900;color:#A33B32;margin-bottom:6px;">نمایش این صفحه با خطا متوقف شد</div>' +
+    '<div class="small" style="color:#7A3B34;line-height:1.9;word-break:break-word;">' + esc(msg) + '</div>' +
+    '<div class="small muted" style="margin-top:8px;">داده‌های شما سالم است. با دکمهٔ زیر به داشبورد برگرد؛ اگر تکرار شد، از پشتیبان‌گیری استفاده کن.</div>' +
+    '<div class="flex gap-2" style="margin-top:10px;"><button class="btn btn-primary btn-sm" data-action="render-recover">بازگشت به داشبورد</button></div>' +
+    '</div></main>';
+}
+
+function renderUnsafe() {
   applyTheme(state.theme);
   if (state.loaded && state.wizard) scheduleWizardStateSave();
   if (!state.loaded) {
@@ -2481,7 +2598,7 @@ function render() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.18.2</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.21</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
@@ -2573,17 +2690,54 @@ function renderSmartSuggestionRow(c) {
   return '<div class="row-card dashboard-v5-suggestion"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">'+esc(c.name)+'</div><div class="small" style="color:var(--v1-primary);margin-top:2px;">'+esc(c.reason)+'</div><div class="small" style="color:'+(overdue?'var(--brick)':'var(--ink-soft)')+';margin-top:2px;font-weight:'+(overdue?'800':'500')+';">'+last+'</div></div><div class="dashboard-v5-suggestion-actions">'+mapBtn+'<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="'+c.id+'">ویزیت</button></div></div>';
 }
 
+function renderLocationCard(m) {
+  const c = m.customer;
+  const s = getCustomerStatus(c);
+  const meta = STATUS_META[s.key] || STATUS_META.ok;
+  const mapUrl = googleMapsDirectionsUrl(c, state.gps.coords);
+  const navBtn = mapUrl
+    ? '<a class="location-nav-btn" href="' + mapUrl + '" target="_blank" rel="noopener noreferrer" title="مسیریابی با گوگل مپ" aria-label="مسیریابی">' + icon("nav", 16) + '</a>'
+    : '<span class="location-nav-btn" style="opacity:.35;" title="موقعیت ثبت نشده">' + icon("nav", 16) + '</span>';
+  const buyerName = String(c.buyerName || "").trim();
+  const buyerPhone = String(c.buyerPhone || "").trim();
+  const buyerLine = (buyerName || buyerPhone)
+    ? '<div class="location-buyer">' + icon("users", 12) + '<span>مسئول خرید:</span>' +
+        (buyerName ? '<b>' + esc(buyerName) + '</b>' : '') +
+        (buyerPhone ? '<span dir="ltr">' + esc(buyerPhone) + '</span><a class="location-call" href="tel:' + esc(buyerPhone) + '" title="تماس" aria-label="تماس">' + icon("phone", 12) + '</a>' : '') +
+      '</div>'
+    : '';
+  const avail = latestBuyerAvailability(c.id);
+  const chips = '<div class="location-chips">' +
+      '<span class="badge" style="color:' + meta.color + ';background:#F4F5F7;font-size:9px;padding:2px 7px;">' + esc(meta.label) + '</span>' +
+      '<span class="badge" style="color:#59636E;background:#EEF0F2;font-size:9px;padding:2px 7px;">' + (s.days === null ? 'هنوز ویزیت نشده' : formatFaNum(s.days) + ' روز از آخرین ویزیت') + '</span>' +
+      (avail ? '<span class="badge" style="color:#315F91;background:#E5F0FB;font-size:9px;padding:2px 7px;">⏰ ' + faClock(avail.nextVisitTime) + '</span>' : '') +
+    '</div>';
+  const lastVisit = state.visits.filter((v) => v.customerId === c.id && !isCancelled(v) && String(v.freeNote || "").trim())
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))[0];
+  const noteHtml = lastVisit
+    ? '<div class="location-note">' + icon("pencil", 11) + ' <span>' + esc(String(lastVisit.freeNote).trim()) + '</span></div>'
+    : '';
+  return '<div class="location-card">' +
+      '<div class="location-card-head"><div class="location-card-title"><strong>' + esc(c.name) + '</strong><span class="location-distance">' + distanceLabel(m.distance) + '</span></div>' + navBtn + '</div>' +
+      buyerLine + chips + noteHtml +
+      '<button class="btn btn-primary btn-block btn-sm" data-action="start-visit-matched" data-id="' + c.id + '">ثبت ویزیت برای این مغازه</button>' +
+    '</div>';
+}
+
 function renderLocationModal() {
   const g = state.gps;
-  const items = g.matches || [];
+  const dueOnly = !!state.locationDueOnly;
+  const allItems = g.matches || [];
+  const items = dueOnly ? allItems.filter((m) => { const k = getCustomerStatus(m.customer).key; return k === "due" || k === "critical"; }) : allItems;
   const updated = g.updatedAt ? new Date(g.updatedAt).toLocaleTimeString("fa-IR", {hour:"2-digit", minute:"2-digit"}) : "—";
   return '<div class="modal-backdrop"><div class="modal-sheet location-sheet">' +
     '<div class="modal-head"><div><span class="modal-title serif">مغازه‌های اطراف من</span><div class="small muted" style="margin-top:3px;">مرتب‌شده بر اساس فاصله از موقعیت فعلی</div></div><button data-action="close-modal">'+icon("x",20)+'</button></div>' +
-    '<div class="location-toolbar"><span class="small muted">آخرین بروزرسانی: '+updated+'</span><button class="btn btn-outline btn-sm" data-action="refresh-location">'+icon("refresh",14)+' رفرش موقعیت</button></div>' +
+    '<div class="location-toolbar"><span class="small muted">آخرین بروزرسانی: '+updated+'</span><div class="location-toolbar-actions"><button class="location-filter-btn'+(dueOnly?' active':'')+'" data-action="toggle-location-due">'+icon("calcheck",13)+' فقط موعددارها</button><button class="btn btn-outline btn-sm" data-action="refresh-location">'+icon("refresh",14)+' رفرش موقعیت</button></div></div>' +
     (g.status === "loading" ? '<div class="location-status"><span class="spin">'+icon("loader",16)+'</span>در حال دریافت موقعیت دقیق...</div>' : '') +
     (g.status === "error" ? '<div class="location-status location-error">'+icon("alert",16)+esc(g.error)+'</div>' : '') +
-    (g.status !== "loading" && items.length ? '<div class="location-list">'+items.map(m=>{ const c=m.customer; const s=getCustomerStatus(c); return '<div class="location-row"><div class="location-main"><strong>'+esc(c.name)+'</strong><span>'+distanceLabel(m.distance)+'</span></div><div class="location-last">'+(s.days===null?'هنوز ویزیت نشده':formatFaNum(s.days)+' روز از آخرین ویزیت گذشته')+'</div><button class="btn btn-primary btn-sm" data-action="start-visit-matched" data-id="'+c.id+'">شروع ویزیت</button></div>';}).join('')+'</div>' : '') +
-    (g.status !== "loading" && !items.length ? '<div class="location-empty">'+icon("map",22)+'<strong>مغازه‌ای با موقعیت ثبت‌شده پیدا نشد</strong><span>اگر مغازه‌ها موقعیت نداشته باشند، ابتدا موقعیت آنها را هنگام ثبت/ویرایش مشتری ذخیره کن.</span><button class="btn btn-soft-amber btn-block" data-action="open-add-customer-here">'+icon("plus",14)+'ثبت مغازه در این موقعیت</button></div>' : '') +
+    (g.status !== "loading" && items.length ? '<div class="location-list">'+items.map(renderLocationCard).join('')+'</div>' : '') +
+    (g.status !== "loading" && !items.length && allItems.length && dueOnly ? '<div class="location-empty">'+icon("calcheck",22)+'<strong>در این محدوده مغازهٔ موعدداری نیست</strong><span>فیلتر «فقط موعددارها» را خاموش کن تا همهٔ مغازه‌های اطراف نمایش داده شوند.</span><button class="btn btn-outline btn-block" data-action="toggle-location-due">نمایش همهٔ مغازه‌ها</button></div>' : '') +
+    (g.status !== "loading" && !items.length && !(allItems.length && dueOnly) ? '<div class="location-empty">'+icon("map",22)+'<strong>مغازه‌ای با موقعیت ثبت‌شده پیدا نشد</strong><span>اگر مغازه‌ها موقعیت نداشته باشند، ابتدا موقعیت آنها را هنگام ثبت/ویرایش مشتری ذخیره کن.</span><button class="btn btn-soft-amber btn-block" data-action="open-add-customer-here">'+icon("plus",14)+'ثبت مغازه در این موقعیت</button></div>' : '') +
     '<div class="small muted" style="margin-top:10px;line-height:1.7;">محدوده نمایش: تا ۳ کیلومتر. با هر بار «رفرش موقعیت»، لیست دوباره بر اساس موقعیت جدید مرتب می‌شود.</div>' +
   '</div></div>';
 }
@@ -2702,13 +2856,75 @@ function renderCustomerCard(c) {
   );
 }
 
+function relativeDayLabel(iso) {
+  if (!iso) return "";
+  const d = daysBetween(iso, todayISO());
+  if (!isFinite(d)) return "";
+  if (d <= 0) return "امروز";
+  if (d === 1) return "دیروز";
+  return formatFaNum(d) + " روز پیش";
+}
+function lastVisitSummaryHtml(customerId) {
+  // V5.21 — خلاصهٔ آخرین ویزیت: برچسب وضعیت + فاصلهٔ زمانی + ساعت حضور خریدار + یادداشت
+  const visits = state.visits.filter((v) => v && v.customerId === customerId);
+  if (!visits.length) return "";
+  const sorted = visits.slice().sort((a, b) => {
+    const da = String(a.date || "") + " " + String(a.createdAt || "");
+    const db = String(b.date || "") + " " + String(b.createdAt || "");
+    return db.localeCompare(da);
+  });
+  const v = sorted[0];
+  const cancelled = isCancelled(v);
+  const purchased = !cancelled && Array.isArray(v.items) && v.items.length > 0;
+  const when = relativeDayLabel(v.date);
+  const note = String(v.freeNote || "").trim();
+  const chip = (color, bg, text) => '<span class="badge" style="color:' + color + ';background:' + bg + ';font-size:9px;padding:2px 6px;">' + text + '</span>';
+  const statusText = cancelled ? "لغو شده" : purchased ? "خرید کرد" : "خرید نکرد";
+  const statusChip = cancelled ? chip("#A33B32", "#FBE9E7", statusText)
+    : purchased ? chip("#216A48", "#E5F3EA", statusText)
+    : chip("#59636E", "#EEF0F2", statusText);
+  const amount = (!cancelled && purchased && getVisitTotal(v)) ? " · " + formatToman(getVisitTotal(v)) : "";
+  return '<div style="margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:9.5px;color:var(--ink-soft);line-height:1.6;">' +
+    statusChip +
+    (when ? '<span>' + esc(when) + amount + '</span>' : '') +
+    (v.nextVisitTime ? '<span style="color:#315F91;font-weight:800;">' + icon("clock", 10) + ' ' + faClock(v.nextVisitTime) + '</span>' : '') +
+    (note ? '<span style="display:block;width:100%;color:var(--v1-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + icon("pencil", 10) + ' ' + esc(note) + '</span>' : '') +
+  '</div>';
+}
+
+function getCustomerBadges(customerId) {
+  const invoices = state.visits.filter((v) => v.customerId === customerId && Array.isArray(v.items) && v.items.length > 0 && !isCancelled(v));
+  const hasDebt = invoices.some((v) => invoiceIsPaymentTracked(v) && getInvoiceBalance(v) > 0);
+  const hasOverdue = invoices.some((v) => invoiceIsPaymentTracked(v) && isInvoiceOverdue(v));
+  const avail = latestBuyerAvailability(customerId);
+  return (hasDebt ? '<span class="badge" style="color:#A33B32;background:#FBE9E7;">بدهکار</span>' : '') +
+    (hasOverdue ? '<span class="badge" style="color:#9A5B13;background:#FFF0D8;">دیرکرد</span>' : '') +
+    (avail ? '<span class="badge" style="color:#315F91;background:#E5F0FB;">خریدار: ' + faClock(avail.nextVisitTime) + '</span>' : '');
+}
+
 function renderCustomerDetail(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) { state.customerDetailId = null; return renderCustomers(); }
   const status = getCustomerStatus(c);
   const meta = STATUS_META[status.key];
+  const avail = latestBuyerAvailability(id); // V5.20.3 (kept in V5.21) — was missing since V5.20 (ReferenceError broke the detail screen)
   const invoices = state.visits.filter((v) => v.customerId === id && v.items && v.items.length && !isCancelled(v)).sort((a, b) => (a.date < b.date ? 1 : -1));
   const totalAll = invoices.reduce((a, v) => a + getVisitTotal(v), 0);
+  const history = state.visits.filter((v) => v.customerId === id).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  const historyHtml = history.length ? history.map((v) => {
+    const cancelled = isCancelled(v);
+    const purchased = !cancelled && Array.isArray(v.items) && v.items.length > 0;
+    const note = (v.freeNote || "").trim();
+    return '<div class="card" style="padding:10px 12px;' + (cancelled ? 'border-color:#D8B89A;background:#FBF4ED;' : '') + '">' +
+      '<div class="flex items-center justify-between gap-2" style="flex-wrap:wrap;">' +
+        '<strong style="font-size:12px;">' + formatFaDate(v.date) + '</strong>' +
+        (cancelled ? '<span class="badge" style="color:#7A4A20;background:#F6E7D8;">لغو شده</span>' :
+          purchased ? '<span class="badge" style="color:#216A48;background:#E5F3EA;">خرید کرد · ' + formatToman(getVisitTotal(v)) + '</span>' : '<span class="badge" style="color:#59636E;background:#EEF0F2;">خرید نکرد</span>') +
+      '</div>' +
+      (note ? '<div class="small" style="margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere;">' + esc(note) + '</div>' : '') +
+      (v.nextVisitTime ? '<div class="small" style="margin-top:7px;color:#315F91;font-weight:700;">⏰ زمان حضور مسئول خرید: ' + faClock(v.nextVisitTime) + '</div>' : '') +
+    '</div>';
+  }).join('') : '<div class="card small muted" style="text-align:center;">هنوز ویزیتی برای این مشتری ثبت نشده.</div>';
 
   return (
     '<div class="section" style="padding-bottom:24px;">' +
@@ -2718,7 +2934,10 @@ function renderCustomerDetail(id) {
 
       '<div class="card">' +
         '<div class="flex items-start justify-between gap-2">' +
-          '<div><div class="serif" style="font-weight:800;font-size:17px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : "") + '</div>' +
+          '<div style="min-width:0;"><div class="serif" style="font-weight:800;font-size:17px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : "") + '</div>' +
+          '<div class="flex items-center gap-1" style="flex-wrap:wrap;margin-top:5px;">' +
+            getCustomerBadges(id) +
+          '</div>' +
           '<div class="small muted" style="margin-top:2px;">' + esc(c.category) + "</div></div>" +
           '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + "</span>" +
         "</div>" +
@@ -2726,6 +2945,7 @@ function renderCustomerDetail(id) {
           (c.address ? '<div class="flex items-center gap-2">' + icon("map", 12) + esc(c.address) + "</div>" : "") +
           (c.phone ? '<div class="flex items-center gap-2">' + icon("phone", 12) + esc(c.phone) + "</div>" : "") +
           '<div class="flex items-center gap-2">' + icon("clock", 12) + "آخرین ویزیت: " + formatFaDate(c.lastVisitDate) + " · بازه: هر " + formatFaNum(c.visitFrequency) + " روز</div>" +
+          (avail ? '<div class="flex items-center gap-2" style="color:#5B4BA8;font-weight:700;">⏰ زمان حضور مسئول خرید: ' + faClock(avail.nextVisitTime) + (avail.buyerAvailabilityNote ? " — " + esc(avail.buyerAvailabilityNote) : "") + "</div>" : "") +
           '<div class="flex items-center gap-2">اولویت: ' + esc(c.priority) + "</div>" +
           (c.lat && c.lng ? '<a href="https://www.google.com/maps?q=' + c.lat + "," + c.lng + '" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2" style="color:var(--amber-dark);font-weight:700;">' + icon("nav", 12) + "نمایش موقعیت روی نقشه</a>" : "") +
           (c.notes ? '<div style="margin-top:4px;">یادداشت: ' + esc(c.notes) + "</div>" : "") +
@@ -2745,12 +2965,16 @@ function renderCustomerDetail(id) {
           ? '<div class="card" style="text-align:center;font-size:12px;color:var(--ink-soft);">هنوز فاکتوری برای این مشتری ثبت نشده.</div>'
           : '<div class="flex-col gap-2">' + invoices.map(renderInvoiceRow).join("") + "</div>") +
       "</div>" +
+      '<div style="margin-top:14px;">' +
+        '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">تاریخچه ویزیت‌ها</div>' +
+        '<div class="flex-col gap-2">' + historyHtml + '</div>' +
+      '</div>' +
     "</div>"
   );
 }
 
 /* ================================================================== */
-/* visit screen (V5.17, kept in V5.18.2)                                                  */
+/* visit screen (V5.17, kept in V5.21)                                                  */
 /* ================================================================== */
 
 function visitScreenState() {
@@ -2782,18 +3006,59 @@ function renderVisitTab() {
   return renderVisitShopCard(cust);
 }
 
+// V5.21 — اطلاعات CRM هر مشتری (فقط خواندن از state)
+function visitCrmInfo(c) {
+  const invoices = state.visits.filter((v) => v && v.customerId === c.id && Array.isArray(v.items) && v.items.length > 0 && !isCancelled(v)).sort((a, b) => (String(a.date || "") < String(b.date || "") ? 1 : -1));
+  const debt = invoices.reduce((s, v) => s + (invoiceIsPaymentTracked(v) ? getInvoiceBalance(v) : 0), 0);
+  const today = todayISO();
+  const st = getCustomerStatus(c);
+  const dueToday = (c.nextVisitDate && c.nextVisitDate <= today) || st.key === "due" || st.key === "critical" || st.key === "never";
+  return { last: invoices[0] || null, debt, dueToday: !!dueToday, hasPurchase: invoices.length > 0 };
+}
+function visitFilterChips() {
+  const f = state.visitFilter || "all";
+  const defs = [["all", "همه"], ["debt", "بدهکاران"], ["nobuy", "خرید نکرده‌ها"], ["today", "امروز سر بزن"]];
+  return '<div class="visit-chips">' + defs.map((d) => '<button class="visit-chip' + (f === d[0] ? ' active' : '') + '" data-action="visit-set-filter" data-id="' + d[0] + '">' + d[1] + '</button>').join("") + '</div>';
+}
 function renderVisitPicker(vs) {
   const q = normalizeName(vs.search || "");
+  const vf = state.visitFilter || "all";
   const list = state.customers
-    .map((c) => Object.assign({}, c, { status: getCustomerStatus(c) }))
+    .map((c) => Object.assign({}, c, { status: getCustomerStatus(c), crm: visitCrmInfo(c) }))
     .filter((c) => !q || normalizeName(c.name + " " + (c.code || "") + " " + (c.phone || "") + " " + (c.address || "")).includes(q))
+    .filter((c) => vf === "debt" ? c.crm.debt > 0 : vf === "nobuy" ? !c.crm.hasPurchase : vf === "today" ? c.crm.dueToday : true)
     .sort((a, b) => suggestionScore(b, b.status) - suggestionScore(a, a.status));
   const rows = list.slice(0, 40).map((c) => {
+    const meta = STATUS_META[c.status.key];
+    const lp = c.crm.last;
+    const purchaseLine = lp
+      ? '<div class="small" style="margin-top:4px;font-weight:700;">' + icon("receipt", 11) + ' آخرین خرید: ' + esc(relativeDayLabel(lp.date)) + ' · ' + formatToman(getVisitTotal(lp)) + '</div>'
+      : '<div class="small muted" style="margin-top:4px;">' + (c.lastVisitDate ? 'خرید ثبت نشده · آخرین ویزیت: ' + esc(relativeDayLabel(c.lastVisitDate)) : 'هنوز ویزیت یا خریدی ثبت نشده') + '</div>';
+    const debtBadge = c.crm.debt > 0 ? '<span class="badge" style="color:#A33B32;background:#FBE9E7;font-size:9px;padding:2px 6px;">بدهی ' + formatToman(c.crm.debt) + '</span>' : '';
+    const navHref = c.lat && c.lng ? 'https://www.google.com/maps?q=' + c.lat + ',' + c.lng : (c.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((c.city ? c.city + ' ' : '') + c.address) : '');
+    return '<div class="visit-crm-card">' +
+      '<button class="visit-crm-main" data-action="visit-pick-customer" data-id="' + c.id + '">' +
+      '<div class="flex items-start justify-between gap-2">' +
+        '<div style="min-width:0;"><div style="font-weight:900;font-size:14px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : '') + '</div>' +
+        '<div class="small muted" style="margin-top:3px;">' + esc(c.category || 'عمومی') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div>' +
+        purchaseLine + debtBadge + lastVisitSummaryHtml(c.id) + '</div>' +
+        '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + '</span>' +
+      '</div></button>' +
+      '<div class="visit-crm-actions">' +
+        '<button class="visit-crm-btn" data-action="visit-start-invoice" data-id="' + c.id + '" aria-label="فاکتور جدید">' + icon("receipt", 19) + '</button>' +
+        (c.phone ? '<a class="visit-crm-btn" href="tel:' + esc(c.phone) + '" aria-label="تماس">' + icon("phone", 19) + '</a>' : '<span class="visit-crm-btn disabled">' + icon("phone", 19) + '</span>') +
+        (navHref ? '<a class="visit-crm-btn" href="' + navHref + '" target="_blank" rel="noopener noreferrer" aria-label="مسیریابی">' + icon("nav", 19) + '</a>' : '<span class="visit-crm-btn disabled">' + icon("nav", 19) + '</span>') +
+        '<button class="visit-crm-btn" data-action="visit-open-detail" data-id="' + c.id + '" aria-label="جزئیات">' + icon("users", 19) + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+  const _legacy = list.slice(0, 0).map((c) => {
     const meta = STATUS_META[c.status.key];
     return '<button class="v1-list-card" data-action="visit-pick-customer" data-id="' + c.id + '" style="text-align:right;width:100%;display:block;">' +
       '<div class="flex items-start justify-between gap-2">' +
         '<div style="min-width:0;"><div style="font-weight:900;font-size:14px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : '') + '</div>' +
-        '<div class="small muted" style="margin-top:3px;">' + esc(c.category || 'عمومی') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div></div>' +
+        '<div class="small muted" style="margin-top:3px;">' + esc(c.category || 'عمومی') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div>' +
+        lastVisitSummaryHtml(c.id) + '</div>' +
         '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + '</span>' +
       '</div>' +
       '<div class="small muted" style="margin-top:8px;">' + icon("clock", 12) + ' آخرین ویزیت: ' + formatFaDate(c.lastVisitDate) + (c.nextVisitDate ? ' · بعدی: ' + formatFaDate(c.nextVisitDate) : '') + '</div>' +
@@ -2801,7 +3066,7 @@ function renderVisitPicker(vs) {
   }).join("");
   return '<div class="section" style="padding-bottom:24px;">' +
     '<div class="v1-page-head"><div><div class="v1-page-title">ویزیت</div><div class="v1-page-sub">مغازه را انتخاب کن تا ویزیت را شروع کنیم</div></div></div>' +
-    '<div class="search-wrap"><input class="input" placeholder="جستجوی مغازه، کد یا تلفن..." data-visit-screen-search value="' + esc(vs.search) + '" />' + '<span class="search-icon">' + icon("search", 15) + '</span></div>' +
+    '<div class="search-wrap"><input class="input" placeholder="جستجوی مغازه، کد یا تلفن..." data-visit-screen-search value="' + esc(vs.search) + '" />' + '<span class="search-icon">' + icon("search", 15) + '</span></div>' + visitFilterChips() +
     (rows
       ? '<div class="flex-col gap-2" style="margin-top:10px;">' + rows + '</div>' +
         (list.length > 40 ? '<div class="small muted" style="margin-top:10px;text-align:center;">' + formatFaNum(list.length - 40) + ' مغازه دیگر — جستجو را دقیق‌تر کن.</div>' : '')
@@ -2815,6 +3080,7 @@ function renderVisitShopCard(c) {
   const top = customerTopProducts(c.id, 4);
   const invoices = state.visits.filter((v) => v.customerId === c.id && v.items && v.items.length && !isCancelled(v)).sort((a, b) => (a.date < b.date ? 1 : -1));
   const last = invoices[0];
+  const avail = latestBuyerAvailability(c.id);
   return '<div class="section" style="padding-bottom:24px;">' +
     '<div class="v1-page-head"><div><div class="v1-page-title">' + esc(c.name) + '</div>' +
       '<div class="v1-page-sub">' + esc(c.category || 'عمومی') + (c.code ? ' · کد ' + esc(c.code) : '') + '</div></div>' +
@@ -2830,6 +3096,7 @@ function renderVisitShopCard(c) {
         (c.address ? '<div class="small muted" style="margin-top:3px;">' + icon("map", 12) + ' ' + esc(c.address) + '</div>' : '') +
       '</div>' : '') +
       '<div class="small muted" style="margin-top:8px;">' + icon("clock", 12) + ' آخرین ویزیت: ' + formatFaDate(c.lastVisitDate) + ' · ویزیت بعدی: ' + formatFaDate(c.nextVisitDate) + '</div>' +
+      (avail ? '<div class="small" style="margin-top:4px;color:#5B4BA8;font-weight:800;">⏰ مسئول خرید: ' + faClock(avail.nextVisitTime) + (avail.buyerAvailabilityNote ? ' — ' + esc(avail.buyerAvailabilityNote) : '') + '</div>' : '') +
       (c.lat && c.lng ? '<a href="https://www.google.com/maps?q=' + c.lat + ',' + c.lng + '" target="_blank" rel="noopener noreferrer" class="small" style="display:inline-block;margin-top:8px;font-weight:800;color:var(--green);">مسیریابی روی نقشه</a>' : '') +
     '</div>' +
 
@@ -2885,6 +3152,7 @@ function openVisitOnly(customerId) {
       customerId,
       q_reason: "", q_competitor: "", q_next_visit: "", q_buyer_time: "",
       buyerName: c.buyerName || "", buyerPhone: c.buyerPhone || "", note: "",
+      nextVisitTime: "", buyerAvailabilityNote: "",
     },
   });
 }
@@ -2906,6 +3174,8 @@ async function submitVisitOnly() {
   const answers = buildAnswersArray(answersObj);
   const days = returnInToDays(f.q_next_visit);
   const nextVisitDate = days > 0 ? addDaysISO(todayISO(), days) : "";
+  const nextVisitTime = formatFaTime(f.nextVisitTime);
+  const availabilityNote = String(f.buyerAvailabilityNote || "").trim();
   const entry = {
     id: uid(), customerId: f.customerId, date: todayISO(), invoiceNumber: null,
     paymentMethod: "", items: [], visitType: "no-purchase",
@@ -2913,6 +3183,8 @@ async function submitVisitOnly() {
     paymentTracking: false, payments: [],
   };
   if (nextVisitDate) entry.nextVisitDate = nextVisitDate;
+  if (nextVisitTime) entry.nextVisitTime = nextVisitTime;
+  if (availabilityNote) entry.buyerAvailabilityNote = availabilityNote;
   state.visits = state.visits.concat([entry]);
   state.customers = state.customers.map((c) => (c.id === f.customerId
     ? Object.assign({}, c, { lastVisitDate: entry.date }, nextVisitDate ? { nextVisitDate } : {}, f.buyerName ? { buyerName: f.buyerName } : {}, f.buyerPhone ? { buyerPhone: f.buyerPhone } : {})
@@ -2927,6 +3199,8 @@ async function submitVisitOnly() {
 function renderVisitOnlyModal(m) {
   const f = m.form;
   const cust = state.customers.find((c) => c.id === f.customerId);
+  const timeChips = (cur) => [["1h", "۱ ساعت دیگر"], ["2h", "۲ ساعت دیگر"], ["evening", "عصر امروز"]].map((pair) =>
+    '<button type="button" class="chip' + (formatFaTime(cur) === quickBuyerTime(pair[0]) ? ' active' : '') + '" data-action="visit-only-time" data-mode="' + pair[0] + '">' + pair[1] + '</button>').join("");
   const chips = (qid, options, current) => '<div class="flex gap-2" style="flex-wrap:wrap;">' + options.map((o) =>
     '<button type="button" class="chip' + (current === o ? ' active' : '') + '" data-action="visit-only-choice" data-q="' + qid + '" data-val="' + esc(o) + '">' + esc(o) + '</button>').join("") + '</div>';
   return '<div class="modal-backdrop"><div class="modal-sheet" style="padding:0;">' +
@@ -2938,6 +3212,11 @@ function renderVisitOnlyModal(m) {
       '<div class="field" style="margin-top:12px;"><span class="field-label">قیمت ما نسبت به رقبا؟</span>' + chips("q_competitor", VISIT_QUESTIONS[1].options, f.q_competitor) + '</div>' +
       '<div class="field" style="margin-top:12px;"><span class="field-label">دوباره کِی سر بزنم؟</span>' + chips("q_next_visit", RETURN_IN_OPTIONS, f.q_next_visit) + '</div>' +
       '<div class="field" style="margin-top:12px;"><span class="field-label">مسئول خرید کِی در مغازه هست؟</span>' + chips("q_buyer_time", BUYER_TIMING_OPTIONS, f.q_buyer_time) + '</div>' +
+      '<div class="field" style="margin-top:12px;"><span class="field-label">زمان حضور مسئول خرید</span>' +
+        '<div class="flex gap-2" style="flex-wrap:wrap;margin-bottom:8px;">' + timeChips(f.nextVisitTime) + '</div>' +
+        '<input type="time" class="input" data-field="nextVisitTime" value="' + esc(formatFaTime(f.nextVisitTime)) + '" />' +
+      '</div>' +
+      '<div style="margin-top:12px;">' + field("یادداشت زمان حضور (اختیاری)", '<input class="input" data-field="buyerAvailabilityNote" value="' + esc(f.buyerAvailabilityNote) + '" placeholder="مثلاً بعد از ساعت ۵ عصر یا روزهای زوج" />') + '</div>' +
       '<div class="grid-2" style="margin-top:12px;">' +
         field("نام مسئول خرید", '<input class="input" data-field="buyerName" value="' + esc(f.buyerName) + '" placeholder="اختیاری" />') +
         field("تلفن مسئول خرید", '<input class="input" data-field="buyerPhone" value="' + esc(f.buyerPhone) + '" placeholder="اختیاری" />') +
@@ -3019,6 +3298,7 @@ function renderInvoiceRow(v) {
       '<div style="min-width:0;">' +
         '<div class="flex items-center gap-2"><span style="font-weight:800;font-size:13px;' + (cancelled ? 'text-decoration:line-through;' : '') + '">' + esc(cust ? cust.name : "مشتری حذف‌شده") + (cust && cust.code ? ' <span class="small muted">(' + esc(cust.code) + ')</span>' : "") + '</span><span class="small muted">#' + formatFaNum(v.invoiceNumber) + "</span></div>" +
         '<div class="flex items-center gap-2 small muted" style="margin-top:2px;"><span>' + formatFaDate(v.date) + '</span>' +
+          (v.nextVisitTime ? '<span class="badge" style="color:#5B4BA8;background:#EDE9FA;">⏰ ' + faClock(v.nextVisitTime) + '</span>' : "") +
           (cancelled ? '<span class="badge" style="color:#7A4A20;background:#F6E7D8;">لغو شده</span>' : '<span class="badge" style="color:' + pm.color + ";background:" + pm.bg + ';">' + esc(v.paymentMethod) + "</span>") +
         "</div>" +
         (note ? '<div class="small muted" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px;">' + icon("note", 12) + " " + esc(note) + "</div>" : "") +
