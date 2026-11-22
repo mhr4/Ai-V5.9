@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.21" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.22" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -468,7 +468,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 @media(max-width:520px){.company-sales-row{grid-template-columns:minmax(0,1fr) auto;}.company-sales-row .company-sales-total-cell{grid-column:1/-1;display:none;}}
 
 
-/* V5.21 — keep the complete dashboard inside one continuous safe-margin frame */
+/* V5.22 — keep the complete dashboard inside one continuous safe-margin frame */
 .section.dashboard-v5{
   margin:10px 10px 18px;
   padding:14px 12px 24px !important;
@@ -479,7 +479,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 
 .strike{text-decoration:line-through;text-decoration-thickness:1.5px;}
 
-/* V5.21 — Dashboard polish: tighter spacing, touch targets >= 44px */
+/* V5.22 — Dashboard polish: tighter spacing, touch targets >= 44px */
 .section.dashboard-v5{margin:6px 8px 12px !important;padding:10px 10px 14px !important;}
 .dashboard-v5{gap:8px !important;}
 .dashboard-v5-stats{gap:6px !important;}
@@ -498,7 +498,7 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 .dashboard-v5-section-title{margin:0 2px 5px !important;}
 @media(max-width:420px){.section.dashboard-v5{margin:4px 6px 10px !important;padding:9px 8px 12px !important;}}
 
-/* V5.21 — Visit tab CRM list */
+/* V5.22 — Visit tab CRM list */
 .visit-chips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;}
 .visit-chip{min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:5px;font-family:inherit;font-size:12px;font-weight:800;border-radius:999px;background:var(--card);color:var(--ink-soft);border:1px solid var(--line);white-space:nowrap;flex:0 0 auto;}
 .visit-chip.active{background:var(--v1-primary,#111927);color:#fff;border-color:transparent;}
@@ -508,6 +508,15 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 .visit-crm-btn{min-height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-inline-start:1px solid var(--v1-line);color:var(--v1-primary,#111927);text-decoration:none;font-family:inherit;}
 .visit-crm-btn:first-child{border-inline-start:0;}
 .visit-crm-btn.disabled{opacity:.3;pointer-events:none;}
+.msc-chart{display:flex;align-items:flex-end;gap:6px;height:150px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 8px 8px}
+.msc-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;min-width:0}
+.msc-val{font-size:9px;opacity:.7;height:14px;white-space:nowrap}
+.msc-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.msc-bar{width:70%;max-width:30px;background:#9aa5b4;border-radius:6px 6px 0 0;transition:height .3s}
+.msc-bar.cur{background:var(--amber)}
+.msc-label{font-size:10px;margin-top:4px;font-weight:700;white-space:nowrap}
+.dismiss-x{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.6;border-radius:10px;cursor:pointer}
+.dismiss-x:active{background:#0001}
 </style>
 </head>
 <body>
@@ -876,6 +885,32 @@ function getJalaliYearMonth(dateObj) {
     return y + "-" + m;
   } catch { return dateObj.toISOString().slice(0, 7); }
 }
+const JALALI_MONTH_NAMES = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+function getMonthlySalesData() {
+  const cur = getJalaliYearMonth(new Date()).split("-").map(Number);
+  let y = cur[0], m = cur[1];
+  const months = [];
+  for (let i = 0; i < 6; i++) {
+    months.unshift({ key: y + "-" + m, label: JALALI_MONTH_NAMES[m - 1] || String(m), total: 0 });
+    m--; if (m < 1) { m = 12; y--; }
+  }
+  const byKey = new Map(months.map(x => [x.key, x]));
+  state.visits.forEach(v => {
+    if (isCancelled(v) || !v.date) return;
+    const b = byKey.get(getJalaliYearMonth(new Date(v.date + "T00:00:00")));
+    if (b) b.total += getVisitTotal(v);
+  });
+  return months;
+}
+function renderMonthlySalesChart() {
+  const data = getMonthlySalesData();
+  const max = Math.max.apply(null, data.map(d => d.total).concat([0]));
+  const bars = data.map((d, i) => {
+    const h = max > 0 ? Math.max(d.total > 0 ? 4 : 0, Math.round(d.total / max * 100)) : 0;
+    return '<div class="msc-col"><div class="msc-val">' + (d.total > 0 ? formatFaNum(Math.round(d.total / 1000000 * 10) / 10) : '') + '</div><div class="msc-track"><div class="msc-bar' + (i === data.length - 1 ? ' cur' : '') + '" style="height:' + h + '%"></div></div><div class="msc-label">' + d.label + '</div></div>';
+  }).join("");
+  return '<div class="dashboard-v5-block"><div class="dashboard-v5-section-title"><span>روند فروش ۶ ماه اخیر</span><span class="small muted">میلیون تومان</span></div><div class="msc-chart">' + bars + '</div></div>';
+}
 function generateCustomerCode(name, customers) {
   const letters = (name || "").trim().replace(/\s+/g, "").slice(0, 2) || "مش";
   let n = 1;
@@ -985,7 +1020,8 @@ const state = {
   customerSearch: "",
   visitCustomerSearch: "",
   customerFilter: "all",
-  visitFilter: "all", // V5.21 — فیلتر لیست تب ویزیت (فقط در حافظه، بدون تغییر IndexedDB)
+  dismissedSuggestions: [], // V5.22 — فقط در حافظه
+  visitFilter: "all", // V5.22 — فیلتر لیست تب ویزیت (فقط در حافظه، بدون تغییر IndexedDB)
   invoiceSearch: "",
   productSearch: "",
   productSort: "name",
@@ -1237,7 +1273,7 @@ function handleImportFile(file) {
 
 function computeSmartSuggestions(limit) {
   const today = todayISO();
-  return state.customers.map((c) => {
+  return state.customers.filter((c) => !state.dismissedSuggestions.includes(c.id)).map((c) => {
     const status = getCustomerStatus(c);
     const visits = state.visits.filter(v => v.customerId === c.id).sort((a,b) => b.date.localeCompare(a.date));
     const last = visits[0];
@@ -1321,7 +1357,7 @@ function routeOrder(items, coords) {
   return route;
 }
 function buildDailyPackages(coords) {
-  const candidates = dailyPlanCandidates(coords);
+  const candidates = dailyPlanCandidates(coords).filter(x => !state.dismissedSuggestions.includes(x.customer.id));
   if (!candidates.length) return { buyers:[], near:[], notes:[], sales:[] };
   const today = todayISO();
   const nearPool = candidates.slice().sort((a,b) => {
@@ -1375,7 +1411,7 @@ function renderPlanStop(x, i) {
   const mapBtn=mapUrl ? '<a class="plan-stop-map" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",15)+'</a>' : '';
   const noteLine = lastVisitSummaryHtml(c.id);
   const nextLine = x.nextVisitDate ? '<small style="color:var(--amber);display:block;margin-top:2px;">ویزیت بعدی: '+formatFaDate(x.nextVisitDate)+'</small>' : '';
-  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+noteLine+nextLine+'</span><span class="plan-stop-actions">'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
+  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+noteLine+nextLine+'</span><span class="plan-stop-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
 }
 function renderPlanPackage(title, subtitle, iconName, items) {
   return '<div class="plan-package"><div class="plan-package-head"><span class="pkg-icon">'+icon(iconName,17)+'</span><span style="min-width:0;flex:1"><strong>'+title+'</strong><small>'+subtitle+'</small></span><span class="daily-plan-badge">'+formatFaNum(items.length)+' مشتری</span></div>'+
@@ -2437,6 +2473,7 @@ function handleAction(action, id, el) {
   }
   if (action === "visit-pick-customer") { openVisitScreenFor(id); return; }
   if (action === "visit-set-filter") { state.visitFilter = id || "all"; render(); return; }
+  if (action === "dismiss-suggestion") { if (id && !state.dismissedSuggestions.includes(id)) state.dismissedSuggestions.push(id); render(); return; }
   if (action === "visit-open-detail") { state.tab = "customers"; state.customerDetailId = id; render(); return; }
   if (action === "visit-change-customer") { visitScreenState().customerId = ""; render(); return; }
   if (action === "visit-start-invoice") { openStartVisit(id, null); return; }
@@ -2548,7 +2585,7 @@ function render() {
   try {
     renderUnsafe();
   } catch (err) {
-    // V5.21 — شبکهٔ ایمنی رندر: یک خطای زمان اجرا نباید کل رابط را سفید/بی‌اثر کند
+    // V5.22 — شبکهٔ ایمنی رندر: یک خطای زمان اجرا نباید کل رابط را سفید/بی‌اثر کند
     console.error("render failed:", err);
     renderCrashScreen(err);
   }
@@ -2557,7 +2594,7 @@ function render() {
 function renderCrashScreen(err) {
   const msg = (err && (err.message || String(err))) || "خطای نامشخص";
   app.innerHTML =
-    '<header class="app-header"><div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.21</span></div>' +
+    '<header class="app-header"><div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.22</span></div>' +
     '<div class="brand-sub">خطای نمایش</div></div></header>' +
     '<main><div class="v1-list-card" style="border-color:#E7B7B0;background:#FDF3F2;">' +
     '<div style="font-weight:900;color:#A33B32;margin-bottom:6px;">نمایش این صفحه با خطا متوقف شد</div>' +
@@ -2598,7 +2635,7 @@ function renderUnsafe() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.21</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.22</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
@@ -2658,6 +2695,7 @@ function renderDashboard() {
         '<button class="dashboard-v5-sale-card" data-action="open-company-sales" data-id="today"><div class="dashboard-v5-sale-label">فروش امروز</div><div class="dashboard-v5-sale-value serif">' + formatToman(todayTotal) + '</div></button>' +
         '<button class="dashboard-v5-sale-card month" data-action="open-company-sales" data-id="month"><div class="dashboard-v5-sale-label">فروش این ماه</div><div class="dashboard-v5-sale-value serif">' + formatToman(monthTotal) + '</div></button>' +
       '</div>' +
+      renderMonthlySalesChart() +
       '<div class="dashboard-v5-stats">' +
         statCard("receipt", "فاکتور امروز", formatFaNum(todayInvoices), "") +
         statCard("users", "مشتریان امروز", formatFaNum(todayCustomers), "") +
@@ -2687,7 +2725,7 @@ function renderSmartSuggestionRow(c) {
   const mapUrl=googleMapsDirectionsUrl(c, state.gps.coords);
   const mapBtn=mapUrl ? '<a class="dashboard-v5-map-btn" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",14)+'</a>' : '';
   const overdue = days !== null && days > 0;
-  return '<div class="row-card dashboard-v5-suggestion"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">'+esc(c.name)+'</div><div class="small" style="color:var(--v1-primary);margin-top:2px;">'+esc(c.reason)+'</div><div class="small" style="color:'+(overdue?'var(--brick)':'var(--ink-soft)')+';margin-top:2px;font-weight:'+(overdue?'800':'500')+';">'+last+'</div></div><div class="dashboard-v5-suggestion-actions">'+mapBtn+'<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="'+c.id+'">ویزیت</button></div></div>';
+  return '<div class="row-card dashboard-v5-suggestion"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">'+esc(c.name)+'</div><div class="small" style="color:var(--v1-primary);margin-top:2px;">'+esc(c.reason)+'</div><div class="small" style="color:'+(overdue?'var(--brick)':'var(--ink-soft)')+';margin-top:2px;font-weight:'+(overdue?'800':'500')+';">'+last+'</div></div><div class="dashboard-v5-suggestion-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="'+c.id+'">ویزیت</button></div></div>';
 }
 
 function renderLocationCard(m) {
@@ -2865,7 +2903,7 @@ function relativeDayLabel(iso) {
   return formatFaNum(d) + " روز پیش";
 }
 function lastVisitSummaryHtml(customerId) {
-  // V5.21 — خلاصهٔ آخرین ویزیت: برچسب وضعیت + فاصلهٔ زمانی + ساعت حضور خریدار + یادداشت
+  // V5.22 — خلاصهٔ آخرین ویزیت: برچسب وضعیت + فاصلهٔ زمانی + ساعت حضور خریدار + یادداشت
   const visits = state.visits.filter((v) => v && v.customerId === customerId);
   if (!visits.length) return "";
   const sorted = visits.slice().sort((a, b) => {
@@ -2907,7 +2945,7 @@ function renderCustomerDetail(id) {
   if (!c) { state.customerDetailId = null; return renderCustomers(); }
   const status = getCustomerStatus(c);
   const meta = STATUS_META[status.key];
-  const avail = latestBuyerAvailability(id); // V5.20.3 (kept in V5.21) — was missing since V5.20 (ReferenceError broke the detail screen)
+  const avail = latestBuyerAvailability(id); // V5.20.3 (kept in V5.22) — was missing since V5.20 (ReferenceError broke the detail screen)
   const invoices = state.visits.filter((v) => v.customerId === id && v.items && v.items.length && !isCancelled(v)).sort((a, b) => (a.date < b.date ? 1 : -1));
   const totalAll = invoices.reduce((a, v) => a + getVisitTotal(v), 0);
   const history = state.visits.filter((v) => v.customerId === id).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
@@ -2974,7 +3012,7 @@ function renderCustomerDetail(id) {
 }
 
 /* ================================================================== */
-/* visit screen (V5.17, kept in V5.21)                                                  */
+/* visit screen (V5.17, kept in V5.22)                                                  */
 /* ================================================================== */
 
 function visitScreenState() {
@@ -3006,7 +3044,7 @@ function renderVisitTab() {
   return renderVisitShopCard(cust);
 }
 
-// V5.21 — اطلاعات CRM هر مشتری (فقط خواندن از state)
+// V5.22 — اطلاعات CRM هر مشتری (فقط خواندن از state)
 function visitCrmInfo(c) {
   const invoices = state.visits.filter((v) => v && v.customerId === c.id && Array.isArray(v.items) && v.items.length > 0 && !isCancelled(v)).sort((a, b) => (String(a.date || "") < String(b.date || "") ? 1 : -1));
   const debt = invoices.reduce((s, v) => s + (invoiceIsPaymentTracked(v) ? getInvoiceBalance(v) : 0), 0);
