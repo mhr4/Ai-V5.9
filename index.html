@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#111927" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Sales AI V5.22" />
+<meta name="apple-mobile-web-app-title" content="Sales AI V5.23" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="icon-192.png" />
 <!-- PWA_HEAD_END -->
@@ -515,6 +515,8 @@ nav.bottom-nav{background:#fff;border-top-color:var(--v1-line);box-shadow:0 -4px
 .msc-bar{width:70%;max-width:30px;background:#9aa5b4;border-radius:6px 6px 0 0;transition:height .3s}
 .msc-bar.cur{background:var(--amber)}
 .msc-label{font-size:10px;margin-top:4px;font-weight:700;white-space:nowrap}
+.far-badge{display:inline-block;margin-top:3px;padding:1px 7px;border-radius:999px;background:var(--brick-bg);color:var(--brick);font-size:10px;font-weight:800;}
+.followup-row.is-red{border-color:var(--brick);}
 .dismiss-x{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;opacity:.6;border-radius:10px;cursor:pointer}
 .dismiss-x:active{background:#0001}
 </style>
@@ -633,7 +635,7 @@ const STATUS_META = {
   never: { label: "هنوز ویزیت نشده", color: "#6B6558" },
 };
 const VISIT_QUESTIONS = [
-  { id: "q_reason", type: "choice", text: "در صورت عدم خرید، دلیل اصلی چه بود؟", options: ["موجودی کافی داشت", "قیمت رقیب پایین‌تر بود", "مشکل نقدینگی داشت", "سایر"] },
+  { id: "q_reason", type: "choice", text: "در صورت عدم خرید، دلیل اصلی چه بود؟", options: ["موجودی کافی داشت", "قیمت رقیب پایین‌تر بود", "مشکل نقدینگی داشت", "خریدار نیست", "سایر"] },
   { id: "q_competitor", type: "choice", text: "قیمت ما نسبت به رقبا؟", options: ["پایین‌تر", "مشابه", "بالاتر", "نمی‌دانم"] },
   { id: "q_bestseller", type: "text", text: "پرفروش‌ترین کالا در این مغازه چیست؟" },
 ];
@@ -1020,7 +1022,7 @@ const state = {
   customerSearch: "",
   visitCustomerSearch: "",
   customerFilter: "all",
-  dismissedSuggestions: [], // V5.22 — فقط در حافظه
+  dismissedSuggestions: [], // V5.23 — منبع واقعی: localStorage (روزانه)؛ از dismissedList() استفاده کن
   visitFilter: "all", // V5.22 — فیلتر لیست تب ویزیت (فقط در حافظه، بدون تغییر IndexedDB)
   invoiceSearch: "",
   productSearch: "",
@@ -1271,9 +1273,76 @@ function handleImportFile(file) {
 /* derived data                                                        */
 /* ================================================================== */
 
+/* ---------- V5.23 helpers: dismiss روزانه، snooze، مسیرهای در جریان ---------- */
+const DISMISS_KEY = "salesai-dismissed-v1";
+function dismissedList() {
+  const today = todayISO();
+  try {
+    const raw = JSON.parse(localStorage.getItem(DISMISS_KEY) || "null");
+    if (raw && raw.date === today && Array.isArray(raw.ids)) return raw.ids;
+  } catch (e) {}
+  return [];
+}
+function dismissSuggestion(id) {
+  const ids = dismissedList();
+  if (id && !ids.includes(id)) ids.push(id);
+  try { localStorage.setItem(DISMISS_KEY, JSON.stringify({ date: todayISO(), ids })); } catch (e) {}
+  state.dismissedSuggestions = ids;
+}
+function latestVisitOf(customerId) {
+  let best = null;
+  state.visits.forEach((v) => {
+    if (v.customerId !== customerId || isCancelled(v)) return;
+    if (!best || v.date >= best.date) best = v;
+  });
+  return best;
+}
+function isSnoozed(customerId) {
+  const v = latestVisitOf(customerId);
+  return !!(v && v.snoozeUntil && v.snoozeUntil > todayISO());
+}
+function isHiddenSuggestion(customerId) {
+  return dismissedList().includes(customerId) || isSnoozed(customerId);
+}
+function isFarFromRoute(meters) { return meters != null && meters > 10000; }
+const FAR_BADGE_HTML = '<span class="far-badge">دور از مسیر</span>';
+function computeActiveFollowUps(limit) {
+  const today = todayISO();
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const list = [];
+  state.customers.forEach((c) => {
+    const v = latestVisitOf(c.id);
+    if (!v || v.visitType !== "no-purchase" || isSnoozed(c.id)) return;
+    const time = v.date === today && v.nextVisitTime ? formatFaTime(v.nextVisitTime) : "";
+    const due = c.nextVisitDate || "";
+    const overdue = !!due && due < today;
+    const isToday = due === today || !!time;
+    if (!overdue && !isToday) return;
+    const tMin = time ? parseInt(time.slice(0, 2), 10) * 60 + parseInt(time.slice(3, 5), 10) : null;
+    const rank = overdue ? 0 : 1;
+    const sortKey = overdue ? due : (tMin == null ? "99:99" : time);
+    list.push({ customer: c, time, overdue, late: !overdue && tMin != null && tMin < nowMin, rank, sortKey, reason: v.noPurchaseReason || "" });
+  });
+  list.sort((a, b) => (a.rank - b.rank) || (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
+  return limit ? list.slice(0, limit) : list;
+}
+function renderFollowUpRow(x) {
+  const c = x.customer;
+  const label = x.overdue ? "زمان سرکشی رسید" : (x.time ? "امروز ساعت " + faClock(x.time) : "امروز");
+  const red = x.overdue || x.late;
+  const mapUrl = googleMapsDirectionsUrl(c, state.gps.coords);
+  const mapBtn = mapUrl ? '<a class="dashboard-v5-map-btn" href="' + mapUrl + '" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">' + icon("nav", 14) + '</a>' : '';
+  return '<div class="row-card dashboard-v5-suggestion followup-row' + (red ? ' is-red' : '') + '"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">' + esc(c.name) + '</div>' +
+    '<div class="small" style="margin-top:2px;font-weight:800;color:' + (red ? 'var(--brick)' : 'var(--v1-primary)') + ';">' + icon("clock", 12) + ' ' + label + '</div>' +
+    (x.reason ? '<div class="small muted" style="margin-top:2px;">' + esc(x.reason) + '</div>' : '') +
+    '</div><div class="dashboard-v5-suggestion-actions">' + mapBtn + '<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="' + c.id + '">ویزیت</button></div></div>';
+}
 function computeSmartSuggestions(limit) {
   const today = todayISO();
-  return state.customers.filter((c) => !state.dismissedSuggestions.includes(c.id)).map((c) => {
+  const followIds = new Set(computeActiveFollowUps().map((x) => x.customer.id));
+  const gpsCoords = state.gps && state.gps.coords;
+  return state.customers.filter((c) => !isHiddenSuggestion(c.id) && !followIds.has(c.id)).map((c) => {
     const status = getCustomerStatus(c);
     const visits = state.visits.filter(v => v.customerId === c.id).sort((a,b) => b.date.localeCompare(a.date));
     const last = visits[0];
@@ -1291,7 +1360,9 @@ function computeSmartSuggestions(limit) {
     }
     if ((c.avgOrderValue || 0) >= 2000000) score += 12;
     if (!reason) reason = "اولویت مناسب برای مسیر امروز";
-    return Object.assign({}, c, { status, score, reason, lastVisit: last });
+    const hasGps = c.lat !== "" && c.lat != null && c.lng !== "" && c.lng != null;
+    const distance = gpsCoords && hasGps ? Math.round(haversineMeters(gpsCoords.lat, gpsCoords.lng, Number(c.lat), Number(c.lng))) : null;
+    return Object.assign({}, c, { status, score, reason, lastVisit: last, distance });
   }).sort((a,b) => b.score-a.score).slice(0, limit || 3);
 }
 function computeTopProducts(limit) {
@@ -1357,7 +1428,7 @@ function routeOrder(items, coords) {
   return route;
 }
 function buildDailyPackages(coords) {
-  const candidates = dailyPlanCandidates(coords).filter(x => !state.dismissedSuggestions.includes(x.customer.id));
+  const candidates = dailyPlanCandidates(coords).filter(x => !isHiddenSuggestion(x.customer.id));
   if (!candidates.length) return { buyers:[], near:[], notes:[], sales:[] };
   const today = todayISO();
   const nearPool = candidates.slice().sort((a,b) => {
@@ -1411,7 +1482,7 @@ function renderPlanStop(x, i) {
   const mapBtn=mapUrl ? '<a class="plan-stop-map" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",15)+'</a>' : '';
   const noteLine = lastVisitSummaryHtml(c.id);
   const nextLine = x.nextVisitDate ? '<small style="color:var(--amber);display:block;margin-top:2px;">ویزیت بعدی: '+formatFaDate(x.nextVisitDate)+'</small>' : '';
-  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+noteLine+nextLine+'</span><span class="plan-stop-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
+  return '<div class="plan-stop"><span class="plan-stop-num">'+formatFaNum(i+1)+'</span><span class="plan-stop-main"><strong>'+esc(c.name)+'</strong><small>'+esc(dist)+' · '+esc(days)+' · '+esc(due)+'</small>'+(isFarFromRoute(x.distance)?FAR_BADGE_HTML:'')+noteLine+nextLine+'</span><span class="plan-stop-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="plan-stop-action" data-action="start-visit-matched" data-id="'+c.id+'">ویزیت</button></span></div>';
 }
 function renderPlanPackage(title, subtitle, iconName, items) {
   return '<div class="plan-package"><div class="plan-package-head"><span class="pkg-icon">'+icon(iconName,17)+'</span><span style="min-width:0;flex:1"><strong>'+title+'</strong><small>'+subtitle+'</small></span><span class="daily-plan-badge">'+formatFaNum(items.length)+' مشتری</span></div>'+
@@ -2473,13 +2544,18 @@ function handleAction(action, id, el) {
   }
   if (action === "visit-pick-customer") { openVisitScreenFor(id); return; }
   if (action === "visit-set-filter") { state.visitFilter = id || "all"; render(); return; }
-  if (action === "dismiss-suggestion") { if (id && !state.dismissedSuggestions.includes(id)) state.dismissedSuggestions.push(id); render(); return; }
+  if (action === "dismiss-suggestion") { dismissSuggestion(id); render(); return; }
   if (action === "visit-open-detail") { state.tab = "customers"; state.customerDetailId = id; render(); return; }
   if (action === "visit-change-customer") { visitScreenState().customerId = ""; render(); return; }
   if (action === "visit-start-invoice") { openStartVisit(id, null); return; }
   if (action === "visit-no-purchase") { openVisitOnly(id); return; }
   if (action === "visit-only-choice") {
     if (state.modal && state.modal.form) state.modal.form[el.dataset.q] = el.dataset.val;
+    render();
+    return;
+  }
+  if (action === "visit-only-snooze") {
+    if (state.modal && state.modal.form) state.modal.form.snoozeDays = Number(el.dataset.val) || 7;
     render();
     return;
   }
@@ -2594,7 +2670,7 @@ function render() {
 function renderCrashScreen(err) {
   const msg = (err && (err.message || String(err))) || "خطای نامشخص";
   app.innerHTML =
-    '<header class="app-header"><div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.22</span></div>' +
+    '<header class="app-header"><div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.23</span></div>' +
     '<div class="brand-sub">خطای نمایش</div></div></header>' +
     '<main><div class="v1-list-card" style="border-color:#E7B7B0;background:#FDF3F2;">' +
     '<div style="font-weight:900;color:#A33B32;margin-bottom:6px;">نمایش این صفحه با خطا متوقف شد</div>' +
@@ -2635,7 +2711,7 @@ function renderUnsafe() {
 function renderHeader() {
   return (
     '<header class="app-header">' +
-      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.22</span></div>' +
+      '<div><div class="flex items-center"><span class="brand-title serif">Sales AI</span><span class="version-badge">V5.23</span></div>' +
       '<div class="brand-sub">دستیار میدانی فروش · پیش‌فاکتور و تحلیل هوشمند</div></div>' +
       '<div class="dashboard-v5-smart-header"><button class="dashboard-v5-smart-mini" data-action="open-smart-wizard" title="ویزیت هوشمند">' + icon("sparkles", 17) + '</button><button class="icon-btn" data-action="open-settings" title="تنظیمات">' + icon("settings", 18) + "</button></div>" +
     "</header>"
@@ -2678,6 +2754,8 @@ function renderDashboard() {
   }
 
   const smart = computeSmartSuggestions(3);
+  const followUps = computeActiveFollowUps(5);
+  const followUpBlock = followUps.length ? '<div class="dashboard-v5-block"><div class="dashboard-v5-section-title"><span>مسیرهای در جریان</span></div><div class="dashboard-v5-list">' + followUps.map(renderFollowUpRow).join("") + '</div></div>' : '';
   const dueToday = state.customers.filter(c => { const s=getCustomerStatus(c); return s.key === "due" || s.key === "critical"; }).length;
   const todayTotal = state.visits.filter(v => v.date === todayISO() && !isCancelled(v)).reduce((a,v)=>a+getVisitTotal(v),0);
   const thisJalaliMonth = getJalaliYearMonth(new Date());
@@ -2695,7 +2773,12 @@ function renderDashboard() {
         '<button class="dashboard-v5-sale-card" data-action="open-company-sales" data-id="today"><div class="dashboard-v5-sale-label">فروش امروز</div><div class="dashboard-v5-sale-value serif">' + formatToman(todayTotal) + '</div></button>' +
         '<button class="dashboard-v5-sale-card month" data-action="open-company-sales" data-id="month"><div class="dashboard-v5-sale-label">فروش این ماه</div><div class="dashboard-v5-sale-value serif">' + formatToman(monthTotal) + '</div></button>' +
       '</div>' +
-      renderMonthlySalesChart() +
+      followUpBlock +
+      '<div class="dashboard-v5-block"><div class="dashboard-v5-section-title"><span>پیشنهاد هوشمند امروز</span></div><div class="dashboard-v5-list">' + (smart.length ? smart.map(c => renderSmartSuggestionRow(c)).join("") : '<div class="small muted" style="padding:8px 2px;">پیشنهادی برای امروز نمانده است.</div>') + '</div></div>' +
+      '<button class="daily-plan-card" data-action="open-daily-plan">' +
+        '<div class="daily-plan-head"><span class="daily-plan-icon">' + icon("route",18) + '</span><span class="daily-plan-copy"><strong>امروز کجا برویم؟</strong></span><span class="daily-plan-badge">۳ پیشنهاد</span></div>' +
+      '</button>' +
+      '<button class="dashboard-v5-primary" data-action="open-location">' + icon("nav", 19) + '<span>مغازه‌های اطراف من</span></button>' +
       '<div class="dashboard-v5-stats">' +
         statCard("receipt", "فاکتور امروز", formatFaNum(todayInvoices), "") +
         statCard("users", "مشتریان امروز", formatFaNum(todayCustomers), "") +
@@ -2707,14 +2790,10 @@ function renderDashboard() {
         '<span style="text-align:left;white-space:nowrap;"><strong class="serif" style="display:block;font-size:13px;color:'+(paymentOverview.overdueAmount>0?'var(--brick)':'var(--ink)')+';">' + formatToman(paymentOverview.receivables) + '</strong><span class="small muted" style="font-size:9px;">ماندهٔ ثبت‌شده</span></span>' +
       '</button>' +
       renderAiCard() +
-      '<button class="daily-plan-card" data-action="open-daily-plan">' +
-        '<div class="daily-plan-head"><span class="daily-plan-icon">' + icon("route",18) + '</span><span class="daily-plan-copy"><strong>امروز کجا برویم؟</strong></span><span class="daily-plan-badge">۳ پیشنهاد</span></div>' +
-      '</button>' +
-      '<button class="dashboard-v5-primary" data-action="open-location">' + icon("nav", 19) + '<span>مغازه‌های اطراف من</span></button>' +
       '<div class="dashboard-v5-section-title"><span>دسترسی سریع</span></div>' +
       '<div class="dashboard-v5-quick"><button class="dashboard-v5-quick-card" data-action="open-add-customer"><span class="dashboard-v5-quick-icon">' + icon("plus",19) + '</span><span><strong>ثبت مشتری جدید</strong></span><span class="dashboard-v5-quick-action">ورود</span></button></div>' +
-      '<div class="dashboard-v5-block"><div class="dashboard-v5-section-title"><span>پیشنهاد هوشمند امروز</span></div><div class="dashboard-v5-list">' + smart.map(c => renderSmartSuggestionRow(c)).join("") + '</div></div>' +
       (topProducts.length ? '<div class="dashboard-v5-block"><div class="dashboard-v5-section-title"><span>پرفروش‌ترین کالاها</span></div><div class="dashboard-v5-top-products">' + topProducts.map((p,i)=>'<div class="dashboard-v5-product-row"><span class="dashboard-v5-rank">'+formatFaNum(i+1)+'</span><span class="dashboard-v5-product-name">'+esc(p.name)+'</span><span class="dashboard-v5-product-qty">'+formatFaNum(p.qty)+' عدد</span></div>').join("") + '</div></div>' : '') +
+      renderMonthlySalesChart() +
     '</div>'
   );
 }
@@ -2725,7 +2804,7 @@ function renderSmartSuggestionRow(c) {
   const mapUrl=googleMapsDirectionsUrl(c, state.gps.coords);
   const mapBtn=mapUrl ? '<a class="dashboard-v5-map-btn" href="'+mapUrl+'" target="_blank" rel="noopener noreferrer" title="مسیر تا مغازه">'+icon("nav",14)+'</a>' : '';
   const overdue = days !== null && days > 0;
-  return '<div class="row-card dashboard-v5-suggestion"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">'+esc(c.name)+'</div><div class="small" style="color:var(--v1-primary);margin-top:2px;">'+esc(c.reason)+'</div><div class="small" style="color:'+(overdue?'var(--brick)':'var(--ink-soft)')+';margin-top:2px;font-weight:'+(overdue?'800':'500')+';">'+last+'</div></div><div class="dashboard-v5-suggestion-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="'+c.id+'">ویزیت</button></div></div>';
+  return '<div class="row-card dashboard-v5-suggestion"><div style="min-width:0;flex:1;"><div style="font-weight:800;font-size:13px;">'+esc(c.name)+'</div><div class="small" style="color:var(--v1-primary);margin-top:2px;">'+esc(c.reason)+(isFarFromRoute(c.distance)?' '+FAR_BADGE_HTML:'')+'</div><div class="small" style="color:'+(overdue?'var(--brick)':'var(--ink-soft)')+';margin-top:2px;font-weight:'+(overdue?'800':'500')+';">'+last+'</div></div><div class="dashboard-v5-suggestion-actions">'+'<button class="dismiss-x" data-action="dismiss-suggestion" data-id="'+c.id+'" title="حذف از پیشنهادها" aria-label="حذف از پیشنهادها">'+icon("x",14)+'</button>'+mapBtn+'<button class="btn btn-sm btn-primary" data-action="start-visit-from-card" data-id="'+c.id+'">ویزیت</button></div></div>';
 }
 
 function renderLocationCard(m) {
@@ -3090,18 +3169,6 @@ function renderVisitPicker(vs) {
       '</div>' +
     '</div>';
   }).join("");
-  const _legacy = list.slice(0, 0).map((c) => {
-    const meta = STATUS_META[c.status.key];
-    return '<button class="v1-list-card" data-action="visit-pick-customer" data-id="' + c.id + '" style="text-align:right;width:100%;display:block;">' +
-      '<div class="flex items-start justify-between gap-2">' +
-        '<div style="min-width:0;"><div style="font-weight:900;font-size:14px;">' + esc(c.name) + (c.code ? ' <span class="small muted">(' + esc(c.code) + ')</span>' : '') + '</div>' +
-        '<div class="small muted" style="margin-top:3px;">' + esc(c.category || 'عمومی') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div>' +
-        lastVisitSummaryHtml(c.id) + '</div>' +
-        '<span class="badge" style="color:' + meta.color + ';background:' + meta.color + '22;">' + meta.label + '</span>' +
-      '</div>' +
-      '<div class="small muted" style="margin-top:8px;">' + icon("clock", 12) + ' آخرین ویزیت: ' + formatFaDate(c.lastVisitDate) + (c.nextVisitDate ? ' · بعدی: ' + formatFaDate(c.nextVisitDate) : '') + '</div>' +
-    '</button>';
-  }).join("");
   return '<div class="section" style="padding-bottom:24px;">' +
     '<div class="v1-page-head"><div><div class="v1-page-title">ویزیت</div><div class="v1-page-sub">مغازه را انتخاب کن تا ویزیت را شروع کنیم</div></div></div>' +
     '<div class="search-wrap"><input class="input" placeholder="جستجوی مغازه، کد یا تلفن..." data-visit-screen-search value="' + esc(vs.search) + '" />' + '<span class="search-icon">' + icon("search", 15) + '</span></div>' + visitFilterChips() +
@@ -3190,7 +3257,7 @@ function openVisitOnly(customerId) {
       customerId,
       q_reason: "", q_competitor: "", q_next_visit: "", q_buyer_time: "",
       buyerName: c.buyerName || "", buyerPhone: c.buyerPhone || "", note: "",
-      nextVisitTime: "", buyerAvailabilityNote: "",
+      nextVisitTime: "", buyerAvailabilityNote: "", snoozeDays: 7,
     },
   });
 }
@@ -3222,10 +3289,20 @@ async function submitVisitOnly() {
   };
   if (nextVisitDate) entry.nextVisitDate = nextVisitDate;
   if (nextVisitTime) entry.nextVisitTime = nextVisitTime;
+  if (f.q_reason) entry.noPurchaseReason = f.q_reason;
+  // V5.23 — «موجودی کافی داشت»: تا پایان بازهٔ snooze از پیشنهادها حذف می‌شود
+  let snoozeDate = "";
+  if (f.q_reason === "موجودی کافی داشت") {
+    const sd = [3, 7, 14].includes(Number(f.snoozeDays)) ? Number(f.snoozeDays) : 7;
+    snoozeDate = addDaysISO(todayISO(), sd);
+    entry.snoozeUntil = snoozeDate;
+  }
+  // «خریدار نیست» با ساعت انتخاب‌شده: پیگیری امروز
+  if (f.q_reason === "خریدار نیست" && nextVisitTime && !nextVisitDate) entry.nextVisitDate = todayISO();
   if (availabilityNote) entry.buyerAvailabilityNote = availabilityNote;
   state.visits = state.visits.concat([entry]);
   state.customers = state.customers.map((c) => (c.id === f.customerId
-    ? Object.assign({}, c, { lastVisitDate: entry.date }, nextVisitDate ? { nextVisitDate } : {}, f.buyerName ? { buyerName: f.buyerName } : {}, f.buyerPhone ? { buyerPhone: f.buyerPhone } : {})
+    ? Object.assign({}, c, { lastVisitDate: entry.date }, entry.nextVisitDate ? { nextVisitDate: entry.nextVisitDate } : (snoozeDate ? { nextVisitDate: snoozeDate } : {}), f.buyerName ? { buyerName: f.buyerName } : {}, f.buyerPhone ? { buyerPhone: f.buyerPhone } : {})
     : c));
   await saveVisits();
   await saveCustomers();
@@ -3247,6 +3324,8 @@ function renderVisitOnlyModal(m) {
       '<button data-action="close-modal">' + icon("x", 20) + '</button></div>' +
     '<div style="padding:14px 18px 22px;">' +
       '<div class="field"><span class="field-label">چرا خرید نکرد؟</span>' + chips("q_reason", VISIT_QUESTIONS[0].options, f.q_reason) + '</div>' +
+      (f.q_reason === "موجودی کافی داشت" ? '<div class="field" style="margin-top:12px;"><span class="field-label">چند روز دیگر مزاحم نشویم؟</span><div class="flex gap-2" style="flex-wrap:wrap;">' + [3, 7, 14].map((n) => '<button type="button" class="chip' + (Number(f.snoozeDays) === n ? ' active' : '') + '" data-action="visit-only-snooze" data-val="' + n + '">' + formatFaNum(n) + ' روز</button>').join("") + '</div></div>' : '') +
+      (f.q_reason === "خریدار نیست" ? '<div class="small" style="margin-top:8px;color:var(--v1-primary);font-weight:800;">ساعت برگشت خریدار را از دکمه‌های «زمان حضور» پایین انتخاب کن.</div>' : '') +
       '<div class="field" style="margin-top:12px;"><span class="field-label">قیمت ما نسبت به رقبا؟</span>' + chips("q_competitor", VISIT_QUESTIONS[1].options, f.q_competitor) + '</div>' +
       '<div class="field" style="margin-top:12px;"><span class="field-label">دوباره کِی سر بزنم؟</span>' + chips("q_next_visit", RETURN_IN_OPTIONS, f.q_next_visit) + '</div>' +
       '<div class="field" style="margin-top:12px;"><span class="field-label">مسئول خرید کِی در مغازه هست؟</span>' + chips("q_buyer_time", BUYER_TIMING_OPTIONS, f.q_buyer_time) + '</div>' +
